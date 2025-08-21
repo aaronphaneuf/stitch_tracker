@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="256" height="256" role="img" aria-labelledby="title">
+  <title id="title">Simple Yarn Ball</title>
+  <!-- Outer circle -->
+  <circle cx="64" cy="64" r="56" fill="none" stroke="#000" stroke-width="6"></circle>
+
+  <!-- Wrap lines -->
+  <path d="M16 72c18-14 40-22 64-22 12 0 24 2 32 6" fill="none" stroke="#000" stroke-width="6" stroke-linecap="round"></path>
+  <path d="M16 90c20-18 44-28 72-28 8 0 16 1 24 3" fill="none" stroke="#000" stroke-width="6" stroke-linecap="round"></path>
+  <path d="M24 48c14-8 30-12 48-12 12 0 24 2 32 6" fill="none" stroke="#000" stroke-width="6" stroke-linecap="round"></path>
+  <path d="M28 104c22-16 46-24 76-24" fill="none" stroke="#000" stroke-width="6" stroke-linecap="round"></path>
+
+  <!-- Small cross-wraps for texture -->
+  <path d="M34 86c10-10 24-18 40-22" fill="none" stroke="#000" stroke-width="6" stroke-linecap="round"></path>
+  <path d="M44 100c10-8 22-14 36-18" fill="none" stroke="#000" stroke-width="6" stroke-linecap="round"></path>
+</svg>
