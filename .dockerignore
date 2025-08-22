@@ -1,0 +1,50 @@
+# --- Git ---
+.git
+.gitignore
+.gitattributes
+
+# --- Python / Django ---
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.log
+*.sqlite3
+db.sqlite3
+.env
+env/
+venv/
+.venv/
+ENV/
+backend/env/
+backend/db.sqlite3
+
+# Static & media (collected at runtime, not source)
+media/
+staticfiles/
+
+# --- Node / Frontend ---
+node_modules/
+dist/
+build/
+.cache/
+.npm/
+.yarn/
+yarn-error.log
+package-lock.json
+pnpm-lock.yaml
+
+# --- OS / IDE ---
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# --- Tests / Coverage ---
+.coverage
+coverage.xml
+htmlcov/
+pytest_cache/
+
