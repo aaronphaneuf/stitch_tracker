@@ -26,9 +26,6 @@ SECRET_KEY = 'django-insecure-@l=uo1+1$v=2s&)%+xvphz%g*=wdra2-p%#g6g^%m%70xgizjf
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
-
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -159,7 +156,7 @@ SIMPLE_JWT = {
 
 AUTH_USER_MODEL = 'accounts.User'
 
-ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", "::1", "0.0.0.0", "192.168.1.90",]
 
 # at bottom
 MEDIA_URL = "/media/"
