@@ -3,3 +3,5 @@ Django==5.2.5
 djangorestframework==3.16.1
 sqlparse==0.5.3
 gunicorn
+djangorestframework-simplejwt
+django-cors-headers
