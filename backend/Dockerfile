@@ -6,21 +6,29 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# system deps (psycopg)
-RUN apt-get update && apt-get install -y build-essential libpq-dev && rm -rf /var/lib/apt/lists/*
+# System deps (psycopg if/when you move to Postgres)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      build-essential libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-COPY backend/requirements.txt /app/requirements.txt
+# Python deps
+COPY backend/requirements.txt ./requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-# project
-COPY backend /app
+# Project source
+COPY backend/ /app/
 
-RUN python manage.py collectstatic --noinput
+# Create non-root user and writable dirs for DB and static
+RUN useradd -m appuser \
+ && mkdir -p /app/data /app/staticfiles \
+ && chown -R appuser:appuser /app
 
-# collect static at build-time only if using whitenoise; otherwise do it in entrypoint
-# RUN python manage.py collectstatic --noinput
-
-RUN useradd -m appuser && mkdir -p /app/data /app/staticfiles && chown -R appuser:appuser /app
 USER appuser
 
-CMD ["gunicorn", "stitchtracker_backend.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3"]
+# Collect static at build time (WhiteNoise serves from STATIC_ROOT)
+RUN python manage.py collectstatic --noinput
+
+# Entrypoint: migrate then start gunicorn
+COPY backend/entrypoint.sh /app/entrypoint.sh
+ENTRYPOINT ["/app/entrypoint.sh"]
+

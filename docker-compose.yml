@@ -1,62 +1,22 @@
 services:
-  db:
-    image: postgres:16
-    environment:
-      POSTGRES_DB: stitchtracker
-      POSTGRES_USER: stitch
-      POSTGRES_PASSWORD: stitchpw
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U stitch -d stitchtracker"]
-      interval: 5s
-      timeout: 3s
-      retries: 20
-
   backend:
     build:
       context: .
       dockerfile: backend/Dockerfile
     environment:
-      DJANGO_SETTINGS_MODULE: stitchtracker_backend.settings.prod
-      SECRET_KEY: "change-me"
-      DEBUG: "0"
-      ALLOWED_HOSTS: "backend,localhost,127.0.0.1"
-      # CORS allowed origins (comma-separated)
-      CORS_ALLOWED_ORIGINS: "http://localhost:3000,http://localhost:5173,http://frontend"
-      # Postgres
-      DB_NAME: stitchtracker
-      DB_USER: stitch
-      DB_PASSWORD: stitchpw
-      DB_HOST: db
-      DB_PORT: "5432"
-      # JWT tuning if desired
-      ACCESS_TOKEN_MINUTES: "60"
-    depends_on:
-      db:
-        condition: service_healthy
+      DJANGO_SETTINGS_MODULE: stitchtracker_backend.settings
+      SQLITE_PATH: /app/data/db.sqlite3
     volumes:
-      - media:/app/media
-      - static:/app/static
+      - stitch_data:/app/data
     expose:
       - "8000"
-    command: >
-      sh -c "
-      python manage.py migrate &&
-      python manage.py collectstatic --noinput &&
-      gunicorn stitchtracker_backend.wsgi:application --bind 0.0.0.0:8000 --workers 3
-      "
 
   frontend:
     build:
       context: .
       dockerfile: frontend/Dockerfile
-    environment:
-      # if you wire runtime config, serve /config.json; otherwise set VITE_API_BASE at build time
-      # and rebuild on env changes
-      VITE_API_BASE: "http://localhost/api"
-    depends_on:
-      - backend
+      args: 
+        VITE_API_BASE: /api
     expose:
       - "80"
 
@@ -66,14 +26,10 @@ services:
       - backend
       - frontend
     ports:
-      - "80:80"
+      - "8082:80"
     volumes:
       - ./deploy/nginx.conf:/etc/nginx/conf.d/default.conf:ro
-      - media:/media:ro
-      - static:/static:ro
 
 volumes:
-  pgdata:
-  media:
-  static:
+  stitch_data:
 
