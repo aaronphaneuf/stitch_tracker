@@ -11,14 +11,15 @@ export default function Signup() {
 
   const submit = async (e) => {
     e.preventDefault();
-    setErr("");
-    setLoading(true);
+    setErr(""); setLoading(true);
     try {
-      await registerAccount(form);
-      navigate("/"); // go to projects/home
+      await registerThenLogin(form);
+      // Either hard reload…
+      window.location.href = "/";          // ✅ guarantees fresh state
+      // …or navigate("/") and also refresh:
+      // navigate("/", { replace: true }); window.location.reload();
     } catch (e) {
       setErr(e.message || "Signup failed");
-    } finally {
       setLoading(false);
     }
   };
