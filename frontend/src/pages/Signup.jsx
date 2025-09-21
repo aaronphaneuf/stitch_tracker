@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { registerAccount } from "../lib/auth";
+import { registerThenLogin} from "../lib/auth";
 
 export default function Signup() {
   const [form, setForm] = useState({ username: "", email: "", password: "" });

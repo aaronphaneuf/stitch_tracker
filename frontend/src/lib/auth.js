@@ -1,42 +1,13 @@
 // frontend/src/lib/auth.js
 
-// Consider "authed" only if a plausible JWT is present
-export function isAuthed() {
-  const t = localStorage.getItem("access");
-  return !!(t && typeof t === "string" && t.split(".").length === 3);
-}
-
-// ---- API base helper ----
-// Default to the reverse-proxy path. Do NOT hardcode localhost.
+// Base URL construction
 const RAW_BASE = import.meta.env.VITE_API_BASE || "/api";
-const clean = RAW_BASE.replace(/\/+$/, "");
-const BASE = clean.endsWith("/api") ? clean : `${clean}/api`;
+const BASE = RAW_BASE.replace(/\/+$/, "");
 const api = (p) => `${BASE}${p.startsWith("/") ? "" : "/"}${p}`;
 
-// Helpful error extraction
-const extractErrors = (data, fallback) => {
-  if (!data || typeof data !== "object") return fallback;
-  if (typeof data.detail === "string") return data.detail;
-  const parts = [];
-  for (const [k, v] of Object.entries(data)) {
-    if (Array.isArray(v)) parts.push(`${k}: ${v.join(", ")}`);
-    else if (typeof v === "string") parts.push(`${k}: ${v}`);
-  }
-  return parts.join(" · ") || fallback;
-};
+// ---- AUTH: keep everything here ----
 
-// keep your existing BASE/api() helpers here…
-
-let accessToken = localStorage.getItem("access") || null;
-let refreshToken = localStorage.getItem("refresh") || null;
-
-function setTokens({ access, refresh }) {
-  accessToken = access || null;
-  refreshToken = refresh || null;
-  if (access) localStorage.setItem("access", access); else localStorage.removeItem("access");
-  if (refresh) localStorage.setItem("refresh", refresh); else localStorage.removeItem("refresh");
-}
-
+// Login (function declaration so it’s hoisted)
 export async function login({ username, password }) {
   const r = await fetch(api("/token/"), {
     method: "POST",
@@ -45,29 +16,43 @@ export async function login({ username, password }) {
   });
   if (!r.ok) throw new Error("Invalid credentials");
   const data = await r.json();
-  setTokens({ access: data.access, refresh: data.refresh });
-  // scheduleRefresh(); // if you use it
+  localStorage.setItem("access", data.access);
+  localStorage.setItem("refresh", data.refresh);
   return data;
 }
 
 export async function registerAccount({ username, email, password }) {
-  // IMPORTANT: no Authorization header
   const r = await fetch(api("/auth/register/"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ username, email, password }),
   });
-  const data = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(data?.detail || `Signup failed: ${r.status}`);
-  return data; // your backend may or may not return tokens here
+  let data; try { data = await r.json(); } catch {}
+  if (!r.ok) throw new Error((data && (data.detail || data.error)) || `Signup failed: ${r.status}`);
+  return data;
 }
 
+// Uses the hoisted login() above
 export async function registerThenLogin({ username, email, password }) {
   await registerAccount({ username, email, password });
-  await login({ username, password });
+  await login({ username, password });     // <-- now defined in this file
+  window.location.href = "/";              // hard reload to ensure new identity
 }
 
-export function logout() {
-  setTokens({ access: null, refresh: null });
+// Small helpers
+export function isAuthed() {
+  return !!localStorage.getItem("access");
+}
+
+export function logout(navigate) {
+  localStorage.removeItem("access");
+  localStorage.removeItem("refresh");
+  // force a fresh app state
+  if (navigate) {
+    navigate("/login", { replace: true });
+    setTimeout(() => window.location.reload(), 0);
+  } else {
+    window.location.replace("/login");
+  }
 }
 
