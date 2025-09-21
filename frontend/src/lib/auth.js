@@ -17,8 +17,9 @@ export function logout(navigate) {
 }
 
 // src/lib/auth.js
-const RAW_BASE = import.meta.env.VITE_API_BASE || "http://127.0.0.1:8000/api";
-const BASE = RAW_BASE.replace(/\/+$/, "").endsWith("/api") ? RAW_BASE.replace(/\/+$/, "") : RAW_BASE.replace(/\/+$/, "") + "/api";
+const RAW_BASE = import.meta.env.VITE_API_BASE || "/api";
+const clean = RAW_BASE.replace(/\/+$/, "");
+const BASE = clean.endsWith("/api") ? clean : `${clean}/api`;
 const api = (p) => `${BASE}${p.startsWith("/") ? "" : "/"}${p}`;
 
 const extractErrors = (data, fallback) => {
