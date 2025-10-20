@@ -194,10 +194,12 @@ export async function apiFetch(path, opts = {}) {
 }
 
 // ---- API endpoints (NOTE: paths NO LONGER include '/api/') ----
+// Align with your Django views: `me` lives at /api/me/, so we call "/me/"
 export async function getCurrentUser() {
-  return apiGet("/auth/me/");
+  return apiGet("auth/me/");
 }
 
+// Projects
 export function listProjects() {
   return apiGet("/projects/");
 }
@@ -372,6 +374,19 @@ export async function adminSetPassword(userId, newPassword) {
     throw new Error(msg);
   }
   return true;
+}
+export async function adminCreateUser(payload) {
+  const res = await apiFetch(`/admin/users/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    let msg = `Failed to create user: ${res.status}`;
+    try { const data = await res.json(); msg = data?.detail || msg; } catch {}
+    throw new Error(msg);
+  }
+  return res.json();
 }
 export async function adminDeleteUser(userId) {
   const res = await apiFetch(`/admin/users/${userId}/`, { method: "DELETE" });

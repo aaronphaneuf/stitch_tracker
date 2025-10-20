@@ -1,418 +1,270 @@
 import { useEffect, useMemo, useState } from "react";
 import ThemePicker from "../components/ThemePicker";
-import BackupControls from "../components/BackupControls";
 import {
   getCurrentUser,
   adminListUsers,
-  adminSetPassword,
-  adminDeleteUser,
   adminUpdateUser,
+  adminCreateUser,
+  adminDeleteUser,
 } from "../lib/api";
 
+function includes(haystack, needle) {
+  if (!needle) return true;
+  return String(haystack || "").toLowerCase().includes(String(needle).toLowerCase());
+}
+
 function AdminUsersPanel() {
+  const [me, setMe] = useState(null);
   const [users, setUsers] = useState([]);
   const [q, setQ] = useState("");
   const [loading, setLoading] = useState(true);
-  const [err, setErr] = useState("");
-  const [edit, setEdit] = useState({ userId: null, mode: null, pw: "" });
-  const [busyId, setBusyId] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const [createForm, setCreateForm] = useState({
+    username: "",
+    email: "",
+    password: "",
+    is_staff: false,
+    is_active: true,
+  });
 
-  const load = async (query = q) => {
+  const load = async (search = "") => {
+    setLoading(true);
     try {
-      setErr("");
-      setLoading(true);
-      const data = await adminListUsers(query);
-      setUsers(Array.isArray(data) ? data : data?.results ?? []);
-    } catch (e) {
-      setErr(e.message || "Failed to load users");
+      const list = await adminListUsers(search);
+      setUsers(Array.isArray(list) ? list : list?.results ?? []);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    load("");
+    (async () => {
+      try {
+        const who = await getCurrentUser();
+        setMe(who);
+      } catch {}
+      await load("");
+    })();
   }, []);
 
-  const onSearch = async (e) => {
-    e.preventDefault();
-    await load(q);
-  };
+  const filtered = useMemo(() => {
+    if (!q) return users;
+    return users.filter(
+      (u) =>
+        includes(u.username, q) ||
+        includes(u.email, q) ||
+        includes(u.first_name, q) ||
+        includes(u.last_name, q)
+    );
+  }, [users, q]);
 
   const onToggle = async (u, field) => {
+    if (busy) return;
+
+    // UI guard: you cannot toggle your own active/staff OFF
+    if (me && me.id === u.id) {
+      if (field === "is_active") return;                // never allow self-deactivate
+      if (field === "is_staff" && u.is_staff) return;   // never allow self-demote
+    }
+
+    setBusy(true);
     try {
-      setBusyId(u.id);
-      const updated = await adminUpdateUser(u.id, { [field]: !u[field] });
-      setUsers((list) => list.map((x) => (x.id === u.id ? updated : x)));
-    } catch (e) {
-      alert(e.message || "Failed to update user");
+      const payload = { [field]: !u[field] };
+      const updated = await adminUpdateUser(u.id, payload);
+      setUsers((arr) => arr.map((x) => (x.id === u.id ? updated : x)));
     } finally {
-      setBusyId(null);
+      setBusy(false);
     }
   };
 
-  const beginReset = (u) => setEdit({ userId: u.id, mode: "password", pw: "" });
-  const savePassword = async (u) => {
-    if (!edit.pw) return;
+  const onCreate = async (e) => {
+    e.preventDefault();
+    if (busy) return;
+    setBusy(true);
     try {
-      setBusyId(u.id);
-      await adminSetPassword(u.id, edit.pw);
-      setEdit({ userId: null, mode: null, pw: "" });
-    } catch (e) {
-      alert(e.message || "Failed to set password");
+      const created = await adminCreateUser(createForm);
+      setUsers((arr) => [created, ...arr]);
+      setCreateForm({
+        username: "",
+        email: "",
+        password: "",
+        is_staff: false,
+        is_active: true,
+      });
     } finally {
-      setBusyId(null);
+      setBusy(false);
     }
   };
 
-  const beginDelete = (u) => setEdit({ userId: u.id, mode: "delete", pw: "" });
-  const confirmDelete = async (u) => {
+  const onDelete = async (u) => {
+    if (busy) return;
+    if (me && me.id === u.id) return; // don't let someone delete themselves here
+    if (!confirm(`Delete user "${u.username}"?`)) return;
+    setBusy(true);
     try {
-      setBusyId(u.id);
       await adminDeleteUser(u.id);
-      setUsers((list) => list.filter((x) => x.id !== u.id));
-      setEdit({ userId: null, mode: null, pw: "" });
-    } catch (e) {
-      alert(e.message || "Failed to delete user");
+      setUsers((arr) => arr.filter((x) => x.id !== u.id));
     } finally {
-      setBusyId(null);
+      setBusy(false);
     }
   };
-
-  const DesktopTable = () => (
-    <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
-      <table className="table table-zebra md:min-w-[720px]">
-        <thead>
-          <tr>
-            <th className="whitespace-nowrap">ID</th>
-            <th>Username</th>
-            <th>Email</th>
-            <th className="whitespace-nowrap">Staff</th>
-            <th className="whitespace-nowrap">Active</th>
-            <th className="whitespace-nowrap">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {users.map((u) => {
-            const isEditing = edit.userId === u.id;
-            const mode = isEditing ? edit.mode : null;
-            const busy = busyId === u.id;
-            return (
-              <tr key={u.id}>
-                <td className="opacity-60">{u.id}</td>
-                <td>{u.username}</td>
-                <td>{u.email || <span className="opacity-60">—</span>}</td>
-                <td>
-                  <input
-                    type="checkbox"
-                    className="toggle"
-                    checked={!!u.is_staff}
-                    disabled={busy}
-                    onChange={() => onToggle(u, "is_staff")}
-                    title="Toggle staff"
-                  />
-                </td>
-                <td>
-                  <input
-                    type="checkbox"
-                    className="toggle"
-                    checked={!!u.is_active}
-                    disabled={busy}
-                    onChange={() => onToggle(u, "is_active")}
-                    title="Toggle active"
-                  />
-                </td>
-                <td className="whitespace-nowrap align-top">
-                  {!isEditing && (
-                    <div className="inline-flex items-center gap-2">
-                      <button
-                        type="button"
-                        className="btn btn-xs"
-                        disabled={busy}
-                        onClick={() => beginReset(u)}
-                      >
-                        Reset password
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-xs btn-error"
-                        disabled={busy}
-                        onClick={() => beginDelete(u)}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  )}
-
-                  {isEditing && mode === "password" && (
-                    <div className="mt-1 flex items-center gap-2">
-                      <input
-                        type="password"
-                        className="input input-xs input-bordered w-44"
-                        placeholder="New password"
-                        value={edit.pw}
-                        onChange={(e) => setEdit((s) => ({ ...s, pw: e.target.value }))}
-                      />
-                      <button
-                        type="button"
-                        className="btn btn-xs btn-primary"
-                        disabled={!edit.pw || busy}
-                        onClick={() => savePassword(u)}
-                      >
-                        Save
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-xs btn-ghost"
-                        onClick={() => setEdit({ userId: null, mode: null, pw: "" })}
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  )}
-
-                  {isEditing && mode === "delete" && (
-                    <div className="mt-1 flex items-center gap-2">
-                      <span className="text-xs opacity-70">
-                        Delete <strong>{u.username}</strong>?
-                      </span>
-                      <button
-                        type="button"
-                        className="btn btn-xs btn-error"
-                        disabled={busy}
-                        onClick={() => confirmDelete(u)}
-                      >
-                        Confirm delete
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-xs btn-ghost"
-                        onClick={() => setEdit({ userId: null, mode: null, pw: "" })}
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  )}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
-  );
-
-  const MobileList = () => (
-    <div className="md:hidden grid gap-3">
-      {users.map((u) => {
-        const isEditing = edit.userId === u.id;
-        const mode = isEditing ? edit.mode : null;
-        const busy = busyId === u.id;
-
-        return (
-          <div key={u.id} className="card bg-base-100">
-            <div className="card-body p-4 gap-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="font-medium">{u.username}</div>
-                  <div className="text-xs opacity-70">{u.email || "—"}</div>
-                </div>
-                <span className="text-xs opacity-60">#{u.id}</span>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <label className="label p-0">
-                  <span className="label-text mr-2">Staff</span>
-                  <input
-                    type="checkbox"
-                    className="toggle"
-                    checked={!!u.is_staff}
-                    disabled={busy}
-                    onChange={() => onToggle(u, "is_staff")}
-                  />
-                </label>
-                <label className="label p-0">
-                  <span className="label-text mr-2">Active</span>
-                  <input
-                    type="checkbox"
-                    className="toggle"
-                    checked={!!u.is_active}
-                    disabled={busy}
-                    onChange={() => onToggle(u, "is_active")}
-                  />
-                </label>
-              </div>
-
-              {!isEditing && (
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    className="btn btn-sm"
-                    disabled={busy}
-                    onClick={() => beginReset(u)}
-                  >
-                    Reset password
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-sm btn-error"
-                    disabled={busy}
-                    onClick={() => beginDelete(u)}
-                  >
-                    Delete
-                  </button>
-                </div>
-              )}
-
-              {isEditing && mode === "password" && (
-                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                  <input
-                    type="password"
-                    className="input input-sm input-bordered w-full sm:w-56"
-                    placeholder="New password"
-                    value={edit.pw}
-                    onChange={(e) => setEdit((s) => ({ ...s, pw: e.target.value }))}
-                  />
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      className="btn btn-sm btn-primary"
-                      disabled={!edit.pw || busy}
-                      onClick={() => savePassword(u)}
-                    >
-                      Save
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-sm btn-ghost"
-                      onClick={() => setEdit({ userId: null, mode: null, pw: "" })}
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {isEditing && mode === "delete" && (
-                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                  <div className="text-sm">
-                    Delete <strong>{u.username}</strong>?
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      className="btn btn-sm btn-error"
-                      disabled={busy}
-                      onClick={() => confirmDelete(u)}
-                    >
-                      Confirm delete
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-sm btn-ghost"
-                      onClick={() => setEdit({ userId: null, mode: null, pw: "" })}
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
 
   return (
-    <div className="card bg-base-200">
-      <div className="card-body gap-4">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-          <h3 className="card-title text-base">Admin · Users</h3>
-          <form onSubmit={onSearch} className="join self-start md:self-auto">
+    <div className="space-y-6">
+      <div className="form-control">
+        <label className="label">
+          <span className="label-text">Search users</span>
+        </label>
+        <input
+          className="input input-bordered"
+          placeholder="Search by name or email"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+        />
+      </div>
+
+      <div className="card bg-base-200 w-full">
+        <div className="card-body">
+          <h3 className="card-title text-base">Create user</h3>
+          <form className="grid gap-3 md:grid-cols-2" onSubmit={onCreate}>
             <input
-              className="input input-bordered join-item"
-              placeholder="Search username or email"
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
+              className="input input-bordered"
+              placeholder="Username"
+              required
+              value={createForm.username}
+              onChange={(e) => setCreateForm((f) => ({ ...f, username: e.target.value }))}
             />
-            <button className="btn btn-ghost join-item" type="submit">
-              Search
-            </button>
+            <input
+              type="email"
+              className="input input-bordered"
+              placeholder="Email"
+              required
+              value={createForm.email}
+              onChange={(e) => setCreateForm((f) => ({ ...f, email: e.target.value }))}
+            />
+            <input
+              type="password"
+              className="input input-bordered md:col-span-2"
+              placeholder="Temporary password"
+              required
+              value={createForm.password}
+              onChange={(e) => setCreateForm((f) => ({ ...f, password: e.target.value }))}
+            />
+            <label className="label cursor-pointer gap-3">
+              <span className="label-text">Staff</span>
+              <input
+                type="checkbox"
+                className="toggle"
+                checked={createForm.is_staff}
+                onChange={(e) => setCreateForm((f) => ({ ...f, is_staff: e.target.checked }))}
+              />
+            </label>
+            <label className="label cursor-pointer gap-3">
+              <span className="label-text">Active</span>
+              <input
+                type="checkbox"
+                className="toggle"
+                checked={createForm.is_active}
+                onChange={(e) => setCreateForm((f) => ({ ...f, is_active: e.target.checked }))}
+              />
+            </label>
+
+            <div className="md:col-span-2">
+              <button className={`btn btn-primary ${busy ? "btn-disabled" : ""}`} disabled={busy}>
+                {busy ? "Saving…" : "Create"}
+              </button>
+            </div>
           </form>
         </div>
+      </div>
 
-        {err && <div className="alert alert-error">{err}</div>}
-
-        {loading ? (
-          <div className="grid gap-2">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="skeleton h-14 w-full" />
-            ))}
-          </div>
-        ) : users.length === 0 ? (
-          <div className="text-sm opacity-70">No users found.</div>
-        ) : (
-          <>
-            <MobileList />
-
-            <div className="hidden md:block">
-              <DesktopTable />
-            </div>
-
-            <div className="text-xs opacity-70 mt-2">
-              Tip: Don’t demote or deactivate the only superuser, or you could lock yourself out.
-            </div>
-          </>
-        )}
+      <div className="overflow-x-auto">
+        <table className="table">
+          <thead>
+            <tr>
+              <th>Username</th>
+              <th>Email</th>
+              <th>Staff</th>
+              <th>Active</th>
+              <th />
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr>
+                <td colSpan={5}>Loading…</td>
+              </tr>
+            ) : filtered.length === 0 ? (
+              <tr>
+                <td colSpan={5}>No users found.</td>
+              </tr>
+            ) : (
+              filtered.map((u) => (
+                <tr key={u.id}>
+                  <td>{u.username}</td>
+                  <td>{u.email}</td>
+                  <td>
+                    <input
+                      type="checkbox"
+                      className="toggle"
+                      checked={!!u.is_staff}
+                      disabled={busy || (me && me.id === u.id)} // block self-demote in UI
+                      onChange={() => onToggle(u, "is_staff")}
+                      title="Toggle staff"
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="checkbox"
+                      className="toggle"
+                      checked={!!u.is_active}
+                      disabled={busy || (me && me.id === u.id)} // block self-deactivate in UI
+                      onChange={() => onToggle(u, "is_active")}
+                      title="Toggle active"
+                    />
+                  </td>
+                  <td className="text-right">
+                    <button
+                      className="btn btn-ghost btn-sm"
+                      disabled={busy || (me && me.id === u.id)}
+                      onClick={() => onDelete(u)}
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
     </div>
   );
 }
 
 export default function Settings() {
-  const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "light");
-  const [me, setMe] = useState(null);
-  const [meErr, setMeErr] = useState("");
-
-  useEffect(() => {
-    document.documentElement.setAttribute("data-theme", theme);
-    localStorage.setItem("theme", theme);
-  }, [theme]);
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const data = await getCurrentUser();
-        setMe(data);
-      } catch (e) {
-        setMeErr(e.message || "Failed to load user");
-      }
-    })();
-  }, []);
-
-  const isAdmin = useMemo(() => !!me && (me.is_staff || me.is_superuser), [me]);
-
   return (
-    <div className="space-y-6">
-      <div className="card bg-base-200">
+    // SAME OUTER WRAPPER AS TagsPage
+    <div className="space-y-4">
+      {/* Header matches TagsPage header */}
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Settings</h1>
+      </div>
+
+      {/* Appearance card */}
+      <div className="card bg-base-200 w-full">
         <div className="card-body">
           <h3 className="card-title text-base">Appearance</h3>
-          <ThemePicker value={theme} onChange={setTheme} />
+          {/* Theme grid will flow; card is full width so it fits on mobile too */}
+          <ThemePicker />
         </div>
       </div>
 
-      {meErr && <div className="alert alert-error">{meErr}</div>}
-      {isAdmin && <AdminUsersPanel />}
-
-      <div className="card bg-base-200">
+      {/* Users (Admin) */}
+      <div className="card bg-base-200 w-full">
         <div className="card-body">
-          <h3 className="card-title text-base">Backup &amp; Restore</h3>
-          <p className="opacity-70 text-sm">
-            Export a JSON backup of your database (projects, progress, yarn, tags, links).
-            Local settings (theme &amp; shelf layout) are bundled on export and restored on import.
-          </p>
-          <BackupControls onAfterImport={() => { /* optional: toast or reload */ }} />
+          <h3 className="card-title text-base">User Management</h3>
+          <AdminUsersPanel />
         </div>
       </div>
     </div>
