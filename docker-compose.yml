@@ -18,9 +18,9 @@ services:
       context: .
       dockerfile: backend/Dockerfile
     environment:
-      DJANGO_SETTINGS_MODULE: stitchtracker_backend.settings.prod
+      DJANGO_SETTINGS_MODULE: stitchtracker_backend.settings.dev
       SECRET_KEY: "change-me"
-      DEBUG: "0"
+      DEBUG: "1"
       # Include the proxy service name and the LAN IP you browse from
       ALLOWED_HOSTS: "backend,frontend,reverse-proxy,localhost,127.0.0.1,192.168.1.90"
       # CORS: allow the URL you actually use in the browser
@@ -68,4 +68,3 @@ services:
 
 volumes:
   pgdata:
-

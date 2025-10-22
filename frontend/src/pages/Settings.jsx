@@ -243,6 +243,44 @@ function AdminUsersPanel() {
 }
 
 export default function Settings() {
+  // ===== Theme state & wiring for ThemePicker =====
+  const THEME_KEY = "st_theme";
+
+  const [theme, setTheme] = useState(() => {
+    // initial from localStorage, then fall back to current html[data-theme], then "light"
+    if (typeof window !== "undefined") {
+      const saved = window.localStorage?.getItem(THEME_KEY);
+      if (saved) return saved;
+      const current = document.documentElement.getAttribute("data-theme");
+      if (current) return current;
+    }
+    return "light";
+  });
+
+  // Apply theme side-effect + persist
+  useEffect(() => {
+    if (typeof document !== "undefined") {
+      document.documentElement.setAttribute("data-theme", theme);
+      try {
+        window.localStorage?.setItem(THEME_KEY, theme);
+      } catch {}
+    }
+  }, [theme]);
+
+  // Optional: on first mount, ensure html reflects saved/current (noop if already set above)
+  useEffect(() => {
+    if (typeof document !== "undefined") {
+      const current = document.documentElement.getAttribute("data-theme");
+      if (!current) {
+        document.documentElement.setAttribute("data-theme", theme);
+      }
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleThemeChange = (next) => {
+    if (typeof next === "string" && next !== theme) setTheme(next);
+  };
+
   return (
     // SAME OUTER WRAPPER AS TagsPage
     <div className="space-y-4">
@@ -255,8 +293,12 @@ export default function Settings() {
       <div className="card bg-base-200 w-full">
         <div className="card-body">
           <h3 className="card-title text-base">Appearance</h3>
-          {/* Theme grid will flow; card is full width so it fits on mobile too */}
-          <ThemePicker />
+          {/* Pass value + handler so ThemePicker can call it */}
+          <ThemePicker
+            value={theme}
+            onChange={handleThemeChange}
+            onSelect={handleThemeChange} // in case the component uses onSelect
+          />
         </div>
       </div>
 

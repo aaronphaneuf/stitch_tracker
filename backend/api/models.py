@@ -140,7 +140,8 @@ class ProgressImage(models.Model):
     progress = models.ForeignKey(
         ProjectProgress, related_name="images", on_delete=models.CASCADE
     )
-    image = models.ImageField(upload_to="projects/progress/")
+    #image = models.ImageField(upload_to="projects/progress/")
+    image = models.ImageField(upload_to="progress/")
     caption = models.CharField(max_length=200, blank=True)
     created = models.DateTimeField(auto_now_add=True)
 

@@ -2,7 +2,7 @@ from pathlib import Path
 import os
 from datetime import timedelta
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-only-key")
 DEBUG = os.getenv("DEBUG", "1") == "1"
@@ -55,6 +55,9 @@ REST_FRAMEWORK = {
 
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
+
+MEDIA_ROOT = BASE_DIR / "projects"  
+MEDIA_URL  = "/projects/" 
 
 # Dev default: SQLite path overridable by env
 SQLITE_PATH = os.getenv("SQLITE_PATH", str(BASE_DIR / "db.sqlite3"))

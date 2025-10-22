@@ -11,6 +11,14 @@ from .models import (
 
 User = get_user_model()
 
+def _abs_url(request, path_or_url: str) -> str:
+    # If already absolute, return as is
+    if path_or_url.startswith("http://") or path_or_url.startswith("https://"):
+        return path_or_url
+    scheme = "https" if request.is_secure() else "http"
+    host = request.get_host()  # includes :8083 when present
+    return f"{scheme}://{host}{path_or_url}"
+
 class AdminUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -141,6 +149,12 @@ class ProgressImageSerializer(serializers.ModelSerializer):
         model = ProgressImage
         fields = ["id", "image", "caption", "created"]
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        request = self.context.get("request")
+        if request and instance.image:
+            data["image"] = request.build_absolute_uri(instance.image.url)
+        return data
 
 class ProjectProgressSerializer(serializers.ModelSerializer):
     """
@@ -226,4 +240,12 @@ class ProjectSerializer(serializers.ModelSerializer):
             project.tags.clear()
             self._apply_tag_names(project, tag_names)
         return project
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        request = self.context.get("request")
+        img = data.get("main_image")
+        if request and img:
+            data["main_image"] = request.build_absolute_uri(img)
+        return data
 

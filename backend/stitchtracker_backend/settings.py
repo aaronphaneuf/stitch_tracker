@@ -163,7 +163,8 @@ AUTH_USER_MODEL = 'accounts.User'
 ALLOWED_HOSTS = ["localhost", "127.0.0.1", "::1", "0.0.0.0", "192.168.1.90",]
 
 # at bottom
-MEDIA_URL = "/media/"
-MEDIA_ROOT = BASE_DIR / "media"
+MEDIA_URL = "/projects/"
+MEDIA_ROOT = BASE_DIR / "projects"
 
-
+USE_X_FORWARDED_HOST = True
+USE_X_FORWARDED_PORT = True
