@@ -1,4 +1,4 @@
-# backend/Dockerfile
+# syntax=docker/dockerfile:1.7
 FROM python:3.12-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -6,29 +6,28 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# System deps (psycopg if/when you move to Postgres)
 RUN apt-get update && apt-get install -y --no-install-recommends \
       build-essential libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Python deps
 COPY backend/requirements.txt ./requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Project source
 COPY backend/ /app/
 
-# Create non-root user and writable dirs for DB and static
 RUN useradd -m appuser \
  && mkdir -p /app/data /app/staticfiles \
  && chown -R appuser:appuser /app
 
 USER appuser
 
-# Collect static at build time (WhiteNoise serves from STATIC_ROOT)
-RUN python manage.py collectstatic --noinput
+# Optional: build-time collectstatic (set via ARG)
+ARG COLLECTSTATIC=0
+ENV COLLECTSTATIC=$COLLECTSTATIC
+RUN if [ "$COLLECTSTATIC" = "1" ]; then python manage.py collectstatic --noinput; else echo "skip collectstatic"; fi
 
-# Entrypoint: migrate then start gunicorn
-COPY backend/entrypoint.sh /app/entrypoint.sh
+# Ensure the entrypoint is executable at copy time (no chmod needed later)
+COPY --chmod=0755 backend/entrypoint.sh /app/entrypoint.sh
+
 ENTRYPOINT ["/app/entrypoint.sh"]
 
