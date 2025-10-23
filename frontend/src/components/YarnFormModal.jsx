@@ -206,4 +206,3 @@ export default function YarnFormModal({ open, onClose, onSaved, yarn }) {
     </dialog>
   );
 }
-

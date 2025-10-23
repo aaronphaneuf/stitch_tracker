@@ -71,4 +71,3 @@ export default function ShelfSlot({ id, items = [], onClearBall, onClearAll }) {
     </div>
   );
 }
-

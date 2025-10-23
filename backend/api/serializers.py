@@ -12,11 +12,10 @@ from .models import (
 User = get_user_model()
 
 def _abs_url(request, path_or_url: str) -> str:
-    # If already absolute, return as is
     if path_or_url.startswith("http://") or path_or_url.startswith("https://"):
         return path_or_url
     scheme = "https" if request.is_secure() else "http"
-    host = request.get_host()  # includes :8083 when present
+    host = request.get_host()
     return f"{scheme}://{host}{path_or_url}"
 
 class AdminUserSerializer(serializers.ModelSerializer):
@@ -50,7 +49,6 @@ class ChangePasswordSerializer(serializers.Serializer):
             raise ValidationError({"old_password": "Incorrect password"})
         validate_password(attrs["new_password"], user)
         return attrs
-
 
 
 BASE_TAGS = set(bleach.sanitizer.ALLOWED_TAGS)
@@ -111,7 +109,6 @@ class YarnSerializer(serializers.ModelSerializer):
 
 
 class ProjectYarnSerializer(serializers.ModelSerializer):
-    """Nested, read-only view of a yarn on a project."""
     yarn = YarnSerializer()
 
     class Meta:
@@ -120,10 +117,6 @@ class ProjectYarnSerializer(serializers.ModelSerializer):
 
 
 class ProjectYarnLinkSerializer(serializers.ModelSerializer):
-    """
-    Write serializer for linking a yarn to a project.
-    Both project and yarn must belong to the current user.
-    """
     project = serializers.PrimaryKeyRelatedField(queryset=Project.objects.all())
     yarn = serializers.PrimaryKeyRelatedField(queryset=Yarn.objects.all())
 
@@ -157,9 +150,6 @@ class ProgressImageSerializer(serializers.ModelSerializer):
         return data
 
 class ProjectProgressSerializer(serializers.ModelSerializer):
-    """
-    Owned via Project (validated in view); expose images read-only here.
-    """
     project = serializers.PrimaryKeyRelatedField(queryset=Project.objects.all(), required=True)
     images = ProgressImageSerializer(many=True, read_only=True)
 
@@ -203,7 +193,6 @@ class ProjectSerializer(serializers.ModelSerializer):
         return super().validate(attrs)
 
     def validate_tag_names(self, names):
-        """Ensure a reasonable list and no dupes."""
         if names is None:
             return names
         cleaned = []
@@ -248,4 +237,3 @@ class ProjectSerializer(serializers.ModelSerializer):
         if request and img:
             data["main_image"] = request.build_absolute_uri(img)
         return data
-

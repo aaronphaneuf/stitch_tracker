@@ -21,7 +21,6 @@ from .serializers import (
 
 User = get_user_model()
 
-
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def me(request):
@@ -34,7 +33,6 @@ def me(request):
         "is_superuser": bool(getattr(user, "is_superuser", False)),
         "is_active": bool(getattr(user, "is_active", True)),
     })
-
 
 class AdminUserViewSet(viewsets.ModelViewSet):
     """
@@ -82,7 +80,6 @@ class AdminUserViewSet(viewsets.ModelViewSet):
         user.save()
         return Response({"detail": "Password updated."}, status=200)
 
-
 class RegisterView(APIView):
     permission_classes = [AllowAny]
 
@@ -113,7 +110,6 @@ class RegisterView(APIView):
             status=status.HTTP_201_CREATED,
         )
 
-
 class ChangePasswordView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -127,10 +123,6 @@ class ChangePasswordView(APIView):
 
 
 class OwnedQuerysetMixin:
-    """
-    Ensures querysets are scoped to the logged-in user.
-    Ensures creates stamp user=self.request.user.
-    """
     def get_queryset(self):
         base = super().get_queryset()
         u = getattr(self.request, "user", None)
@@ -167,18 +159,12 @@ class TagViewSet(OwnedQuerysetMixin, viewsets.ModelViewSet):
     search_fields = ["name"]
 
     def get_queryset(self):
-        """
-        Count only this user's projects per tag.
-        """
         qs = super().get_queryset()
         u = self.request.user
         return qs.annotate(project_count=Count("project", filter=Q(project__user=u), distinct=True))
 
 
 class ProjectYarnViewSet(viewsets.ModelViewSet):
-    """
-    Links a user's project to a user's yarn.
-    """
     permission_classes = [IsAuthenticated]
     serializer_class = ProjectYarnLinkSerializer
     queryset = ProjectYarn.objects.select_related("project", "yarn").order_by("-id")
@@ -201,9 +187,6 @@ class ProjectYarnViewSet(viewsets.ModelViewSet):
 
 
 class ProjectProgressViewSet(viewsets.ModelViewSet):
-    """
-    Progress items are owned via their project.
-    """
     permission_classes = [IsAuthenticated]
     serializer_class = ProjectProgressSerializer
     queryset = ProjectProgress.objects.select_related("project").order_by("-date")
@@ -251,11 +234,6 @@ class ProjectProgressViewSet(viewsets.ModelViewSet):
             ProgressImage.objects.create(progress=progress, image=f)
 
 def _guard_self_deactivation(self, request, instance, data):
-    """
-    Prevent an admin from deactivating or demoting their own account.
-    - Block setting is_active=False on yourself
-    - Block setting is_staff=False on yourself
-    """
     if not data:
         return
 
@@ -277,7 +255,5 @@ def _guard_self_deactivation(self, request, instance, data):
 
         if "is_staff" in data:
             new_staff = to_bool(data.get("is_staff"))
-            # Only block demotion; promoting yourself (True) is still blocked by UI, but safe here.
             if new_staff is False:
                 raise ValidationError({"is_staff": "You cannot remove your own staff status."})
-

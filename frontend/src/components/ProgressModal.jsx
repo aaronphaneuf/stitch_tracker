@@ -229,4 +229,3 @@ export default function ProgressModal({ projectId, progress = null, open, onClos
     </dialog>
   );
 }
-

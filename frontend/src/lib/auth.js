@@ -1,13 +1,7 @@
-// frontend/src/lib/auth.js
-
-// Base URL construction
 const RAW_BASE = import.meta.env.VITE_API_BASE || "/api";
 const BASE = RAW_BASE.replace(/\/+$/, "");
 const api = (p) => `${BASE}${p.startsWith("/") ? "" : "/"}${p}`;
 
-// ---- AUTH: keep everything here ----
-
-// Login (function declaration so it’s hoisted)
 export async function login({ username, password }) {
   const r = await fetch(api("/token/"), {
     method: "POST",
@@ -32,14 +26,12 @@ export async function registerAccount({ username, email, password }) {
   return data;
 }
 
-// Uses the hoisted login() above
 export async function registerThenLogin({ username, email, password }) {
   await registerAccount({ username, email, password });
-  await login({ username, password });     // <-- now defined in this file
-  window.location.href = "/";              // hard reload to ensure new identity
+  await login({ username, password });
+  window.location.href = "/";
 }
 
-// Small helpers
 export function isAuthed() {
   return !!localStorage.getItem("access");
 }
@@ -47,7 +39,6 @@ export function isAuthed() {
 export function logout(navigate) {
   localStorage.removeItem("access");
   localStorage.removeItem("refresh");
-  // force a fresh app state
   if (navigate) {
     navigate("/login", { replace: true });
     setTimeout(() => window.location.reload(), 0);
@@ -55,4 +46,3 @@ export function logout(navigate) {
     window.location.replace("/login");
   }
 }
-

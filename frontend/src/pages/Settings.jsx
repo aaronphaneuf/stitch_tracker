@@ -61,10 +61,9 @@ function AdminUsersPanel() {
   const onToggle = async (u, field) => {
     if (busy) return;
 
-    // UI guard: you cannot toggle your own active/staff OFF
     if (me && me.id === u.id) {
-      if (field === "is_active") return;                // never allow self-deactivate
-      if (field === "is_staff" && u.is_staff) return;   // never allow self-demote
+      if (field === "is_active") return;
+      if (field === "is_staff" && u.is_staff) return;
     }
 
     setBusy(true);
@@ -98,7 +97,7 @@ function AdminUsersPanel() {
 
   const onDelete = async (u) => {
     if (busy) return;
-    if (me && me.id === u.id) return; // don't let someone delete themselves here
+    if (me && me.id === u.id) return;
     if (!confirm(`Delete user "${u.username}"?`)) return;
     setBusy(true);
     try {
@@ -208,7 +207,7 @@ function AdminUsersPanel() {
                       type="checkbox"
                       className="toggle"
                       checked={!!u.is_staff}
-                      disabled={busy || (me && me.id === u.id)} // block self-demote in UI
+                      disabled={busy || (me && me.id === u.id)}
                       onChange={() => onToggle(u, "is_staff")}
                       title="Toggle staff"
                     />
@@ -218,7 +217,7 @@ function AdminUsersPanel() {
                       type="checkbox"
                       className="toggle"
                       checked={!!u.is_active}
-                      disabled={busy || (me && me.id === u.id)} // block self-deactivate in UI
+                      disabled={busy || (me && me.id === u.id)}
                       onChange={() => onToggle(u, "is_active")}
                       title="Toggle active"
                     />
@@ -243,11 +242,9 @@ function AdminUsersPanel() {
 }
 
 export default function Settings() {
-  // ===== Theme state & wiring for ThemePicker =====
   const THEME_KEY = "st_theme";
 
   const [theme, setTheme] = useState(() => {
-    // initial from localStorage, then fall back to current html[data-theme], then "light"
     if (typeof window !== "undefined") {
       const saved = window.localStorage?.getItem(THEME_KEY);
       if (saved) return saved;
@@ -257,7 +254,6 @@ export default function Settings() {
     return "light";
   });
 
-  // Apply theme side-effect + persist
   useEffect(() => {
     if (typeof document !== "undefined") {
       document.documentElement.setAttribute("data-theme", theme);
@@ -267,7 +263,6 @@ export default function Settings() {
     }
   }, [theme]);
 
-  // Optional: on first mount, ensure html reflects saved/current (noop if already set above)
   useEffect(() => {
     if (typeof document !== "undefined") {
       const current = document.documentElement.getAttribute("data-theme");
@@ -275,34 +270,29 @@ export default function Settings() {
         document.documentElement.setAttribute("data-theme", theme);
       }
     }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleThemeChange = (next) => {
     if (typeof next === "string" && next !== theme) setTheme(next);
   };
 
   return (
-    // SAME OUTER WRAPPER AS TagsPage
     <div className="space-y-4">
-      {/* Header matches TagsPage header */}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Settings</h1>
       </div>
 
-      {/* Appearance card */}
       <div className="card bg-base-200 w-full">
         <div className="card-body">
           <h3 className="card-title text-base">Appearance</h3>
-          {/* Pass value + handler so ThemePicker can call it */}
           <ThemePicker
             value={theme}
             onChange={handleThemeChange}
-            onSelect={handleThemeChange} // in case the component uses onSelect
+            onSelect={handleThemeChange}
           />
         </div>
       </div>
 
-      {/* Users (Admin) */}
       <div className="card bg-base-200 w-full">
         <div className="card-body">
           <h3 className="card-title text-base">User Management</h3>
@@ -312,4 +302,3 @@ export default function Settings() {
     </div>
   );
 }
-

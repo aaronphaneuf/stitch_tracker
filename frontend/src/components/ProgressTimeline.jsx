@@ -8,22 +8,19 @@ export default function ProgressTimeline({
     Date.parse(b.date || b.created_at) - Date.parse(a.date || a.created_at)
   );
 
-  // Resolve any relative or portless URLs against the API/base origin (prefer VITE_API_BASE if you have it)
   const normalizeToBackend = (u) => {
     if (!u) return "";
     try {
-      // Prefer explicit API base if you have it; else fall back to current origin
       const base = (import.meta?.env?.VITE_API_BASE) || window.location.origin;
-      const baseURL = new URL(base, window.location.href);     // ensures we can read .origin/.port
-      const url = new URL(u, baseURL.origin);                  // handles relative + absolute
+      const baseURL = new URL(base, window.location.href);
+      const url = new URL(u, baseURL.origin);
 
-      // If same host but missing port, inject backend's port (from VITE_API_BASE if provided)
       if (url.hostname === baseURL.hostname && !url.port && baseURL.port) {
         url.port = baseURL.port;
       }
       return url.href;
     } catch {
-      return u; // if it's some odd string, just return it unchanged
+      return u;
     }
   };
 
@@ -32,7 +29,7 @@ export default function ProgressTimeline({
       ? imgs
           .map((x) => (typeof x === "string" ? x : x?.url || x?.image || x?.src))
           .filter(Boolean)
-          .map(normalizeToBackend)   // <-- normalize here
+          .map(normalizeToBackend)
       : [];
 
   const fmtDate = (v) => {
@@ -67,7 +64,7 @@ export default function ProgressTimeline({
                     {imgs.length > 0 && (
                       <button
                         className="btn btn-ghost btn-xs px-2 py-0 h-auto min-h-0"
-                        onClick={() => onOpenImages?.(imgs)}   // <-- now these are absolute & port-correct
+                        onClick={() => onOpenImages?.(imgs)}
                         title="View images"
                       >
                         📷 <span className="ml-1 text-xs">{imgs.length}</span>
@@ -114,4 +111,3 @@ export default function ProgressTimeline({
     </ul>
   );
 }
-

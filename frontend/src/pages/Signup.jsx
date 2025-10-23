@@ -1,4 +1,3 @@
-// src/pages/Signup.jsx
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { registerAccount } from "../lib/auth";
@@ -15,10 +14,7 @@ export default function Signup() {
     setErr(""); setLoading(true);
     try {
       await registerThenLogin(form);
-      // Either hard reload…
-      window.location.href = "/";          // ✅ guarantees fresh state
-      // …or navigate("/") and also refresh:
-      // navigate("/", { replace: true }); window.location.reload();
+      window.location.href = "/";
     } catch (e) {
       setErr(e.message || "Signup failed");
       setLoading(false);
@@ -82,4 +78,3 @@ export default function Signup() {
     </div>
   );
 }
-

@@ -31,7 +31,7 @@ MIDDLEWARE = [
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [BASE_DIR / "templates"],  # ok if the folder doesn't exist
+        "DIRS": [BASE_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -43,7 +43,6 @@ TEMPLATES = [
         },
     },
 ]
-
 
 ROOT_URLCONF = "stitchtracker_backend.urls"
 WSGI_APPLICATION = "stitchtracker_backend.wsgi.application"
@@ -59,6 +58,4 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_ROOT = BASE_DIR / "projects"  
 MEDIA_URL  = "/projects/" 
 
-# Dev default: SQLite path overridable by env
 SQLITE_PATH = os.getenv("SQLITE_PATH", str(BASE_DIR / "db.sqlite3"))
-

@@ -21,12 +21,10 @@ RUN useradd -m appuser \
 
 USER appuser
 
-# Optional: build-time collectstatic (set via ARG)
 ARG COLLECTSTATIC=0
 ENV COLLECTSTATIC=$COLLECTSTATIC
 RUN if [ "$COLLECTSTATIC" = "1" ]; then python manage.py collectstatic --noinput; else echo "skip collectstatic"; fi
 
-# Ensure the entrypoint is executable at copy time (no chmod needed later)
 COPY --chmod=0755 backend/entrypoint.sh /app/entrypoint.sh
 
 ENTRYPOINT ["/app/entrypoint.sh"]

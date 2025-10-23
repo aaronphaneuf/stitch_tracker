@@ -32,4 +32,3 @@ services:
 
 volumes:
   stitch_data:
-

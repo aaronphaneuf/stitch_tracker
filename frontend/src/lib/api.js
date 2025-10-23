@@ -1,18 +1,11 @@
-// frontend/src/lib/api.js
-
-// ---- API base & URL helper ----
 const RAW_BASE = import.meta.env.VITE_API_BASE || "/api";
-// strip trailing slashes; we expect BASE to already point at /api
 const BASE = RAW_BASE.replace(/\/+$/, "");
-// Build URLs with exactly one /api prefix
 const api = (p) => `${BASE}${p.startsWith("/") ? "" : "/"}${p}`;
 
-// ---- Auth token state ----
 let accessToken = localStorage.getItem("access") || null;
 let refreshToken = localStorage.getItem("refresh") || null;
 let refreshTimer = null;
 
-// ---- Helpers ----
 function decodeJwt(token) {
   try {
     const base64 = token.split(".")[1];
@@ -23,7 +16,6 @@ function decodeJwt(token) {
   }
 }
 
-// Optional timeout wrapper (kept from your version)
 export function withTimeout(_promise, ms = 10000, label = "request") {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(`${label} timed out after ${ms}ms`), ms);
@@ -33,7 +25,6 @@ export function withTimeout(_promise, ms = 10000, label = "request") {
   };
 }
 
-// ---- Auto-refresh scheduling ----
 function scheduleRefresh() {
   if (refreshTimer) clearTimeout(refreshTimer);
   if (!accessToken) return;
@@ -43,7 +34,7 @@ function scheduleRefresh() {
 
   const expMs = payload.exp * 1000;
   const now = Date.now();
-  const skew = 30 * 1000; // refresh 30s before expiry
+  const skew = 30 * 1000;
   const delay = Math.max(0, expMs - now - skew);
 
   refreshTimer = setTimeout(async () => {
@@ -57,7 +48,6 @@ function scheduleRefresh() {
   }, delay);
 }
 
-// ---- Auth functions ----
 export async function login({ username, password }) {
   const r = await fetch(api("/token/"), {
     method: "POST",
@@ -101,7 +91,6 @@ async function tryRefresh() {
   return accessToken;
 }
 
-// ---- Generic request helpers (use api() everywhere) ----
 async function apiGet(path) {
   const doFetch = async () =>
     fetch(api(path), {
@@ -182,7 +171,6 @@ async function apiDelete(path) {
   return true;
 }
 
-// A thin wrapper that lets you pass custom fetch options (used by some tag/admin funcs)
 export async function apiFetch(path, opts = {}) {
   const headers = {
     Accept: "application/json",
@@ -193,13 +181,10 @@ export async function apiFetch(path, opts = {}) {
   return res;
 }
 
-// ---- API endpoints (NOTE: paths NO LONGER include '/api/') ----
-// Align with your Django views: `me` lives at /api/me/, so we call "/me/"
 export async function getCurrentUser() {
   return apiGet("auth/me/");
 }
 
-// Projects
 export function listProjects() {
   return apiGet("/projects/");
 }
@@ -236,7 +221,6 @@ export function deleteYarn(id) {
   return apiDelete(`/yarns/${id}/`);
 }
 
-// multipart helpers
 async function apiPostForm(path, formData) {
   const doFetch = () =>
     fetch(api(path), {
@@ -297,7 +281,6 @@ export function createProjectWithImage(payload, file) {
   return apiPostForm("/projects/", fd);
 }
 
-// Project ↔ Yarn links
 export function createProjectYarn({ project, yarn, quantity_used_skeins = null }) {
   return apiPost("/project-yarns/", { project, yarn, quantity_used_skeins });
 }
@@ -308,7 +291,6 @@ export function updateProjectYarn(id, patch) {
   return apiPatch(`/project-yarns/${id}/`, patch);
 }
 
-// Tags
 export async function listTags(search = "") {
   const qs = search ? `?search=${encodeURIComponent(search)}` : "";
   const res = await apiFetch(`/tags/${qs}`);
@@ -342,7 +324,6 @@ export async function deleteTag(id) {
   return true;
 }
 
-// User & progress helpers
 export function listAllProgress({ start, end } = {}) {
   const qs = new URLSearchParams();
   if (start) qs.set("start", start);
@@ -354,7 +335,6 @@ export function changePassword({ old_password, new_password }) {
   return apiPost(`/auth/change-password/`, { old_password, new_password });
 }
 
-// Admin
 export async function adminListUsers(query = "") {
   const t = withTimeout(null, 10000, "adminListUsers");
   const url = `/admin/users/${query ? `?search=${encodeURIComponent(query)}` : ""}`;
@@ -411,7 +391,6 @@ export async function adminUpdateUser(userId, patch) {
   return res.json();
 }
 
-// Backup/restore (now through the proxy too)
 export async function downloadBackup() {
   const res = await fetch(api("/backup/"), { credentials: "omit" });
   if (!res.ok) throw new Error(`Backup failed: ${res.status}`);
@@ -428,6 +407,4 @@ export async function restoreBackup(data, { mode = "replace" } = {}) {
   return res.json();
 }
 
-// Start refresh timer if we already had a token
 if (accessToken) scheduleRefresh();
-

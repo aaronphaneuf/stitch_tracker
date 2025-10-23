@@ -263,4 +263,3 @@ export default function ProjectGrid() {
     </>
   );
 }
-

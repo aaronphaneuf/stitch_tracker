@@ -12,4 +12,3 @@ async function register(username: string, email: string, password: string) {
   }
   return res.json();
 }
-

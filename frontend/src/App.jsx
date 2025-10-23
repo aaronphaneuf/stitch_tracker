@@ -21,7 +21,6 @@ function ThemeToggle() {
   )
 }
 
-
 export default function App() {
   return (
     <div className="md:flex min-h-screen bg-base-100">
@@ -32,4 +31,3 @@ export default function App() {
     </div>
   );
 }
-

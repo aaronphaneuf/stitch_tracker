@@ -23,4 +23,3 @@ def promote_first_user_to_superuser(sender, instance, created, **kwargs):
             sender.objects.filter(pk=first.pk).update(is_superuser=True, is_staff=True)
 
     transaction.on_commit(_promote_if_first)
-

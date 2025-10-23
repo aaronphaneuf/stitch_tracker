@@ -149,7 +149,6 @@ class ProgressImage(models.Model):
         return f"Image for {self.progress_id}"
 
 
-
 class ProjectYarn(models.Model):
     project = models.ForeignKey(
         Project, related_name="yarns", on_delete=models.CASCADE
@@ -174,4 +173,3 @@ class ProjectYarn(models.Model):
     def __str__(self):
         used = self.quantity_used_grams or self.quantity_used_skeins or "?"
         return f"{self.project.name} used {used} of {self.yarn}"
-
