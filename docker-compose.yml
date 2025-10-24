@@ -18,7 +18,7 @@ services:
       context: .
       dockerfile: backend/Dockerfile
     environment:
-      DJANGO_SETTINGS_MODULE: stitchtracker_backend.settings.dev
+      DJANGO_SETTINGS_MODULE: stitchtracker_backend.settings.prod
       SECRET_KEY: "change-me"
       DEBUG: "1"
       ALLOWED_HOSTS: "backend,frontend,reverse-proxy,localhost,127.0.0.1,192.168.1.90"
