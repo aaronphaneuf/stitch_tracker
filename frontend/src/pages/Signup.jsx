@@ -62,7 +62,7 @@ export default function Signup() {
             />
             <div className="label">
               <span className="label-text-alt opacity-70">
-                8+ chars; Django validators will enforce strength.
+                8+ chars.
               </span>
             </div>
           </label>

@@ -2,15 +2,11 @@ services:
   db:
     image: postgres:16
     env_file:
-      - .env.local   # swap to .env.prod on your server
-    environment:
-      POSTGRES_DB: ${DB_NAME}
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      - .env.test   # or swap to .env.test when you want
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      test: ["CMD-SHELL", "pg_isready -U $POSTGRES_USER -d $POSTGRES_DB"]
       interval: 5s
       timeout: 3s
       retries: 20
@@ -21,16 +17,15 @@ services:
       context: .
       dockerfile: backend/Dockerfile
     env_file:
-      - .env.local   # swap to .env.prod on your server
+      - .env.test   # swap between .env.test and .env.public easily
     depends_on:
       db:
         condition: service_healthy
     expose:
-      - "8000"     # internal only
+      - "8000"
     volumes:
-      - media_data:/app/media   # Django writes here
+      - media_data:/app/media
     restart: unless-stopped
-    # Let your entrypoint handle migrate/collectstatic/gunicorn
 
   frontend:
     build:
@@ -41,7 +36,7 @@ services:
     depends_on:
       - backend
     expose:
-      - "80"       # internal only
+      - "80"
     restart: unless-stopped
 
   reverse-proxy:
@@ -50,16 +45,13 @@ services:
       - backend
       - frontend
     ports:
-      - "8082:80"  # the only public port
+      - "8082:80"
     volumes:
       - ./deploy/nginx.conf:/etc/nginx/conf.d/default.conf:ro
-      - media_data:/media:ro               # nginx reads same files
-      # Uncomment only if you serve static via nginx:
-      # - static_data:/static:ro
+      - media_data:/media:ro
     restart: unless-stopped
 
 volumes:
   pgdata:
   media_data:
-  # static_data:
 
