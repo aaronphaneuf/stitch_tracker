@@ -2,9 +2,18 @@ from .base import *
 import os
 from pathlib import Path
 
-DEBUG = False
+DEBUG = os.getenv("DEBUG", "0") in {"1", "true", "yes"}
+ALLOWED_HOSTS = [h.strip() for h in os.getenv("ALLOWED_HOSTS", "*").split(",") if h.strip()]
+CSRF_TRUSTED_ORIGINS = [
+    o.strip() for o in os.getenv("CSRF_TRUSTED_ORIGINS", "").split(",") if o.strip()
+]
 
-ALLOWED_HOSTS = [h.strip() for h in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",") if h.strip()]
+if "*" in ALLOWED_HOSTS and not CSRF_TRUSTED_ORIGINS:
+    CSRF_TRUSTED_ORIGINS = [
+        "http://localhost",
+        "http://127.0.0.1",
+        "http://0.0.0.0",
+    ]
 
 DATABASES = {
     "default": {
@@ -25,13 +34,6 @@ MEDIA_ROOT = BASE_DIR / "media"
 
 def env_bool(k: str, default: bool) -> bool:
     return os.getenv(k, str(default)).lower() in {"1", "true", "yes", "on"}
-
-CSRF_TRUSTED_ORIGINS = [
-    o.strip() for o in os.getenv("CSRF_TRUSTED_ORIGINS", "").split(",") if o.strip()
-] or [
-    "http://localhost:8082",
-    "http://127.0.0.1:8082",
-]
 
 ENABLE_HTTPS = env_bool("ENABLE_HTTPS", False)
 
