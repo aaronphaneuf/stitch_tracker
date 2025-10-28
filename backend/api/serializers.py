@@ -19,11 +19,47 @@ def _abs_url(request, path_or_url: str) -> str:
     return f"{scheme}://{host}{path_or_url}"
 
 class AdminUserSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(
+        write_only=True,
+        required=False,
+        allow_blank=True,
+        min_length=8,
+        style={"input_type": "password"},
+    )
+
     class Meta:
         model = User
-        fields = ["id", "username", "email", "is_staff", "is_superuser", "is_active", "date_joined", "last_login"]
+        fields = [
+            "id",
+            "username",
+            "email",
+            "is_staff",
+            "is_superuser",
+            "is_active",
+            "date_joined",
+            "last_login",
+            "password",
+        ]
         read_only_fields = ["date_joined", "last_login"]
 
+    def create(self, validated_data):
+        password = validated_data.pop("password", None)
+
+        user = User.objects.create_user(**validated_data, password=password)
+
+        return user
+
+    def update(self, instance, validated_data):
+        password = validated_data.pop("password", None)
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+
+        if password:
+            instance.set_password(password)
+
+        instance.save()
+        return instance
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=8, trim_whitespace=False)
