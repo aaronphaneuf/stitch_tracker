@@ -8,6 +8,9 @@ export default function ProgressModal({ projectId, progress = null, open, onClos
   const [stitches, setStitches] = useState(0);
   const [notes, setNotes] = useState("");
 
+  // NEW: date/time state
+  const [progressDate, setProgressDate] = useState("");
+
   const [files, setFiles] = useState([]);
   const [previews, setPreviews] = useState([]);
 
@@ -17,6 +20,16 @@ export default function ProgressModal({ projectId, progress = null, open, onClos
   const [now, setNow] = useState(Date.now());
   const tickRef = useRef(null);
 
+  function toInputValue(d) {
+    const pad = (n) => String(n).padStart(2, "0");
+    const yyyy = d.getFullYear();
+    const mm = pad(d.getMonth() + 1);
+    const dd = pad(d.getDate());
+    const hh = pad(d.getHours());
+    const min = pad(d.getMinutes());
+    return `${yyyy}-${mm}-${dd}T${hh}:${min}`;
+  }
+
   useEffect(() => {
     if (!open) return;
 
@@ -24,6 +37,14 @@ export default function ProgressModal({ projectId, progress = null, open, onClos
       setRows(progress?.rows_completed ?? 0);
       setStitches(progress?.stitches_completed ?? 0);
       setNotes(progress?.notes ?? "");
+
+      if (progress?.date) {
+        const d = new Date(progress.date);
+        setProgressDate(toInputValue(d));
+      } else {
+        setProgressDate(toInputValue(new Date()));
+      }
+
       setRunning(false);
       setStartMs(null);
       setAccMs(0);
@@ -34,6 +55,9 @@ export default function ProgressModal({ projectId, progress = null, open, onClos
       setRows(0);
       setStitches(0);
       setNotes("");
+
+      setProgressDate(toInputValue(new Date()));
+
       setRunning(true);
       setStartMs(Date.now());
       setAccMs(0);
@@ -104,12 +128,18 @@ export default function ProgressModal({ projectId, progress = null, open, onClos
   };
 
   const save = async () => {
+    let isoDate = null;
+    if (progressDate) {
+      isoDate = new Date(progressDate).toISOString();
+    }
+
     if (isEdit) {
       if (!progress?.id) {
         alert("Cannot edit: progress id is missing.");
         return;
       }
       await updateProgress(progress.id, {
+        date: isoDate,
         rows_completed: Number(rows || 0),
         stitches_completed: Number(stitches || 0),
         notes: notes || "",
@@ -117,6 +147,7 @@ export default function ProgressModal({ projectId, progress = null, open, onClos
     } else {
       const payload = {
         project: Number(projectId),
+        date: isoDate,
         rows_completed: Number(rows || 0),
         stitches_completed: Number(stitches || 0),
         notes: notes || "",
@@ -127,6 +158,7 @@ export default function ProgressModal({ projectId, progress = null, open, onClos
         await createProgress(payload);
       }
     }
+
     onSaved?.();
     onClose?.();
   };
@@ -152,7 +184,23 @@ export default function ProgressModal({ projectId, progress = null, open, onClos
           </div>
         )}
 
+        <label className="form-control w-full mb-4">
+          <div className="label"><span className="label-text">Date completed:</span></div>
+          <input
+            type="datetime-local"
+            className="input input-bordered w-full"
+            value={progressDate}
+            onChange={(e) => setProgressDate(e.target.value)}
+          />
+          <div className="label">
+            <span className="label-text-alt opacity-70 text-xs">
+              You can backdate or correct the timestamp here.
+            </span>
+          </div>
+        </label>
+
         <div className="grid grid-cols-2 gap-3 mb-3">
+          {/* rows */}
           <div className="card bg-base-200">
             <div className="card-body p-3 gap-2">
               <div className="text-xs opacity-70">Rows</div>
@@ -164,6 +212,7 @@ export default function ProgressModal({ projectId, progress = null, open, onClos
             </div>
           </div>
 
+          {/* stitches */}
           <div className="card bg-base-200">
             <div className="card-body p-3 gap-2">
               <div className="text-xs opacity-70">Stitches</div>
