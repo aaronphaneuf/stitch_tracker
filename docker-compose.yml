@@ -25,6 +25,7 @@ services:
       - "8000"
     volumes:
       - media_data:/app/media
+      - static_data:/app/staticfiles
     restart: unless-stopped
 
   frontend:
@@ -47,11 +48,12 @@ services:
     ports:
       - "8082:80"
     volumes:
-      - ./deploy/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./deploy/nginx:/etc/nginx/conf.d:ro
       - media_data:/media:ro
+      - static_data:/staticfiles:ro
     restart: unless-stopped
 
 volumes:
   pgdata:
   media_data:
-
+  static_data:
