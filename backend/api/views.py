@@ -91,7 +91,6 @@ class RegisterView(APIView):
         user = serializer.save()
         if make_staff:
             user.is_staff = True
-            # Do NOT automatically grant superuser
             user.save(update_fields=["is_staff"])
 
         refresh = RefreshToken.for_user(user)
@@ -237,7 +236,6 @@ def _guard_self_deactivation(self, request, instance, data):
     if not data:
         return
 
-    # Normalize truthy/falsey
     def to_bool(v):
         if isinstance(v, bool):
             return v

@@ -24,7 +24,6 @@ services:
       ALLOWED_HOSTS: "backend,frontend,reverse-proxy,localhost,127.0.0.1,192.168.1.90"
       CORS_ALLOWED_ORIGINS: "http://reverse-proxy,http://frontend,http://localhost:8082,http://192.168.1.90:8082,http://192.168.1.90"
       DEV_CSRF_TRUSTED_ORIGINS: "http://192.168.1.90:8082,http://localhost:8082,http://127.0.0.1:8082"
-      # Postgres
       DB_NAME: stitchtracker
       DB_USER: stitch
       DB_PASSWORD: stitchpw

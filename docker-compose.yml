@@ -2,7 +2,7 @@ services:
   db:
     image: postgres:16
     env_file:
-      - .env.public   # or swap to .env.test when you want
+      - .env.public
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -17,7 +17,7 @@ services:
       context: .
       dockerfile: backend/Dockerfile
     env_file:
-      - .env.public   # swap between .env.test and .env.public easily
+      - .env.public
     depends_on:
       db:
         condition: service_healthy

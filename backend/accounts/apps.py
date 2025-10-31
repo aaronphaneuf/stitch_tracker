@@ -9,5 +9,4 @@ class AccountsConfig(AppConfig):
     name = "accounts"
 
     def ready(self):
-        # Ensures signals are registered
-        from . import signals  # noqa
+        from . import signals
