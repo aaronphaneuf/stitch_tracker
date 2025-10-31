@@ -1,4 +1,4 @@
-# backend/Dockerfile
+# syntax=docker/dockerfile:1.7
 FROM python:3.12-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -6,21 +6,25 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# system deps (psycopg)
-RUN apt-get update && apt-get install -y build-essential libpq-dev && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      build-essential libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-COPY backend/requirements.txt /app/requirements.txt
+COPY backend/requirements.txt ./requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-# project
-COPY backend /app
+COPY backend/ /app/
 
-# collect static at build-time only if using whitenoise; otherwise do it in entrypoint
-# RUN python manage.py collectstatic --noinput
+RUN useradd -m appuser \
+ && mkdir -p /app/data /app/staticfiles \
+ && chown -R appuser:appuser /app
 
-# Run as non-root
-RUN useradd -m appuser
 USER appuser
 
-CMD ["gunicorn", "stitchtracker_backend.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3"]
+ARG COLLECTSTATIC=0
+ENV COLLECTSTATIC=$COLLECTSTATIC
+RUN if [ "$COLLECTSTATIC" = "1" ]; then python manage.py collectstatic --noinput; else echo "skip collectstatic"; fi
 
+COPY --chmod=0755 backend/entrypoint.sh /app/entrypoint.sh
+
+ENTRYPOINT ["/app/entrypoint.sh"]

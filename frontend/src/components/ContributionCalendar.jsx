@@ -121,4 +121,3 @@ export default function ContributionCalendar({
     </div>
   );
 }
-

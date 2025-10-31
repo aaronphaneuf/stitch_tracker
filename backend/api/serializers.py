@@ -11,12 +11,55 @@ from .models import (
 
 User = get_user_model()
 
+def _abs_url(request, path_or_url: str) -> str:
+    if path_or_url.startswith("http://") or path_or_url.startswith("https://"):
+        return path_or_url
+    scheme = "https" if request.is_secure() else "http"
+    host = request.get_host()
+    return f"{scheme}://{host}{path_or_url}"
+
 class AdminUserSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(
+        write_only=True,
+        required=False,
+        allow_blank=True,
+        min_length=8,
+        style={"input_type": "password"},
+    )
+
     class Meta:
         model = User
-        fields = ["id", "username", "email", "is_staff", "is_superuser", "is_active", "date_joined", "last_login"]
+        fields = [
+            "id",
+            "username",
+            "email",
+            "is_staff",
+            "is_superuser",
+            "is_active",
+            "date_joined",
+            "last_login",
+            "password",
+        ]
         read_only_fields = ["date_joined", "last_login"]
 
+    def create(self, validated_data):
+        password = validated_data.pop("password", None)
+
+        user = User.objects.create_user(**validated_data, password=password)
+
+        return user
+
+    def update(self, instance, validated_data):
+        password = validated_data.pop("password", None)
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+
+        if password:
+            instance.set_password(password)
+
+        instance.save()
+        return instance
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=8, trim_whitespace=False)
@@ -42,7 +85,6 @@ class ChangePasswordSerializer(serializers.Serializer):
             raise ValidationError({"old_password": "Incorrect password"})
         validate_password(attrs["new_password"], user)
         return attrs
-
 
 
 BASE_TAGS = set(bleach.sanitizer.ALLOWED_TAGS)
@@ -103,7 +145,6 @@ class YarnSerializer(serializers.ModelSerializer):
 
 
 class ProjectYarnSerializer(serializers.ModelSerializer):
-    """Nested, read-only view of a yarn on a project."""
     yarn = YarnSerializer()
 
     class Meta:
@@ -112,10 +153,6 @@ class ProjectYarnSerializer(serializers.ModelSerializer):
 
 
 class ProjectYarnLinkSerializer(serializers.ModelSerializer):
-    """
-    Write serializer for linking a yarn to a project.
-    Both project and yarn must belong to the current user.
-    """
     project = serializers.PrimaryKeyRelatedField(queryset=Project.objects.all())
     yarn = serializers.PrimaryKeyRelatedField(queryset=Yarn.objects.all())
 
@@ -141,11 +178,14 @@ class ProgressImageSerializer(serializers.ModelSerializer):
         model = ProgressImage
         fields = ["id", "image", "caption", "created"]
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        request = self.context.get("request")
+        if request and instance.image:
+            data["image"] = request.build_absolute_uri(instance.image.url)
+        return data
 
 class ProjectProgressSerializer(serializers.ModelSerializer):
-    """
-    Owned via Project (validated in view); expose images read-only here.
-    """
     project = serializers.PrimaryKeyRelatedField(queryset=Project.objects.all(), required=True)
     images = ProgressImageSerializer(many=True, read_only=True)
 
@@ -189,7 +229,6 @@ class ProjectSerializer(serializers.ModelSerializer):
         return super().validate(attrs)
 
     def validate_tag_names(self, names):
-        """Ensure a reasonable list and no dupes."""
         if names is None:
             return names
         cleaned = []
@@ -227,3 +266,10 @@ class ProjectSerializer(serializers.ModelSerializer):
             self._apply_tag_names(project, tag_names)
         return project
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        request = self.context.get("request")
+        img = data.get("main_image")
+        if request and img:
+            data["main_image"] = request.build_absolute_uri(img)
+        return data

@@ -71,4 +71,3 @@ export default function ImageGalleryModal({ open, onClose, images = [] }) {
     </div>
   );
 }
-

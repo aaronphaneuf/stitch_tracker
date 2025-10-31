@@ -21,4 +21,3 @@ class UserAdmin(DjangoUserAdmin):
             "fields": ("username", "email", "password1", "password2"),
         }),
     )
-

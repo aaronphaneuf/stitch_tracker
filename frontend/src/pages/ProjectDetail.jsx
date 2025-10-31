@@ -101,7 +101,6 @@ export default function ProjectDetail() {
 
   const [addYarnOpen, setAddYarnOpen] = useState(false);
 
-  // Gallery state
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [galleryImages, setGalleryImages] = useState([]);
 
@@ -583,4 +582,3 @@ export default function ProjectDetail() {
     </div>
   );
 }
-

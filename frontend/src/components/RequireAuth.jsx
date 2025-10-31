@@ -6,4 +6,3 @@ export default function RequireAuth({ children }) {
   if (!isAuthed()) return <Navigate to="/login" state={{ from: loc }} replace />;
   return children;
 }
-

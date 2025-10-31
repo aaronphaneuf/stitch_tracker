@@ -1,11 +1,11 @@
-// src/lib/api.js
-const API_BASE = import.meta.env.VITE_API_BASE;
+const RAW_BASE = import.meta.env.VITE_API_BASE || "/api";
+const BASE = RAW_BASE.replace(/\/+$/, "");
+const api = (p) => `${BASE}${p.startsWith("/") ? "" : "/"}${p}`;
 
 let accessToken = localStorage.getItem("access") || null;
 let refreshToken = localStorage.getItem("refresh") || null;
 let refreshTimer = null;
 
-// --- JWT decode helper ---
 function decodeJwt(token) {
   try {
     const base64 = token.split(".")[1];
@@ -16,14 +16,7 @@ function decodeJwt(token) {
   }
 }
 
-function withBase(path) {
-  const base = (API_BASE || "").replace(/\/+$/, ""); // strip trailing /
-  const p = String(path || "").startsWith("/") ? path : `/${path || ""}`;
-  return `${base}${p}`.replace(/([^:]\/)\/+/g, "$1"); // collapse // except after http:
-}
-
-// put near the top of api.js
-export function withTimeout(promise, ms = 10000, label = "request") {
+export function withTimeout(_promise, ms = 10000, label = "request") {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(`${label} timed out after ${ms}ms`), ms);
   return {
@@ -32,8 +25,6 @@ export function withTimeout(promise, ms = 10000, label = "request") {
   };
 }
 
-
-// --- Schedule automatic refresh before expiry ---
 function scheduleRefresh() {
   if (refreshTimer) clearTimeout(refreshTimer);
   if (!accessToken) return;
@@ -43,13 +34,13 @@ function scheduleRefresh() {
 
   const expMs = payload.exp * 1000;
   const now = Date.now();
-  const skew = 30 * 1000; // refresh 30 seconds before expiry
+  const skew = 30 * 1000;
   const delay = Math.max(0, expMs - now - skew);
 
   refreshTimer = setTimeout(async () => {
     try {
       await tryRefresh();
-      scheduleRefresh(); // reschedule after refreshing
+      scheduleRefresh();
     } catch (e) {
       console.warn("Auto-refresh failed:", e);
       logout();
@@ -57,23 +48,23 @@ function scheduleRefresh() {
   }, delay);
 }
 
-// --- Auth functions ---
 export async function login({ username, password }) {
-  const r = await fetch(`${API_BASE}/api/token/`, {
+  const r = await fetch(api("/token/"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ username, password }),
   });
   if (!r.ok) throw new Error("Invalid credentials");
 
-  const data = await r.json();
+  const data = await r.json().catch(() => ({}));
+  if (!data.access || !data.refresh) throw new Error("Login failed: no tokens returned");
+
   accessToken = data.access;
   refreshToken = data.refresh;
   localStorage.setItem("access", accessToken);
   localStorage.setItem("refresh", refreshToken);
 
-  scheduleRefresh(); // start timer
-
+  scheduleRefresh();
   return data;
 }
 
@@ -87,7 +78,7 @@ export function logout() {
 
 async function tryRefresh() {
   if (!refreshToken) throw new Error("No refresh token");
-  const r = await fetch(`${API_BASE}/api/token/refresh/`, {
+  const r = await fetch(api("/token/refresh/"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ refresh: refreshToken }),
@@ -97,14 +88,12 @@ async function tryRefresh() {
   const data = await r.json();
   accessToken = data.access;
   localStorage.setItem("access", accessToken);
-
   return accessToken;
 }
 
-// --- Generic request helpers ---
-export async function apiGet(path) {
+async function apiGet(path) {
   const doFetch = async () =>
-    fetch(`${API_BASE}${path}`, {
+    fetch(api(path), {
       headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
     });
 
@@ -119,7 +108,7 @@ export async function apiGet(path) {
 
 async function apiPost(path, body) {
   const doFetch = () =>
-    fetch(`${API_BASE}${path}`, {
+    fetch(api(path), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -142,7 +131,7 @@ async function apiPost(path, body) {
 
 async function apiPatch(path, body) {
   const doFetch = () =>
-    fetch(`${API_BASE}${path}`, {
+    fetch(api(path), {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
@@ -150,6 +139,7 @@ async function apiPatch(path, body) {
       },
       body: JSON.stringify(body),
     });
+
   let res = await doFetch();
   if (res.status === 401 && refreshToken) {
     await tryRefresh();
@@ -164,12 +154,11 @@ async function apiPatch(path, body) {
 
 async function apiDelete(path) {
   const doFetch = () =>
-    fetch(`${API_BASE}${path}`, {
+    fetch(api(path), {
       method: "DELETE",
-      headers: {
-        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-      },
+      headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
     });
+
   let res = await doFetch();
   if (res.status === 401 && refreshToken) {
     await tryRefresh();
@@ -182,69 +171,62 @@ async function apiDelete(path) {
   return true;
 }
 
-// --- API endpoints ---
+export async function apiFetch(path, opts = {}) {
+  const headers = {
+    Accept: "application/json",
+    ...(opts.headers || {}),
+    ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+  };
+  const res = await fetch(api(path), { ...opts, headers });
+  return res;
+}
+
 export async function getCurrentUser() {
-  return apiGet("/api/auth/me/");
+  return apiGet("auth/me/");
 }
 
 export function listProjects() {
-  return apiGet("/api/projects/");
+  return apiGet("/projects/");
 }
-
 export function getProject(id) {
-  return apiGet(`/api/projects/${id}/`);
+  return apiGet(`/projects/${id}/`);
 }
-
 export function listProgressByProject(projectId) {
-  return apiGet(`/api/progress/?project=${encodeURIComponent(projectId)}`);
+  return apiGet(`/progress/?project=${encodeURIComponent(projectId)}`);
 }
-
 export function createProgress({ project, rows_completed, stitches_completed, notes }) {
-  return apiPost("/api/progress/", { project, rows_completed, stitches_completed, notes });
+  return apiPost("/progress/", { project, rows_completed, stitches_completed, notes });
 }
-
 export function updateProgress(id, patch) {
-  return apiPatch(`/api/progress/${id}/`, patch);
+  return apiPatch(`/progress/${id}/`, patch);
 }
-
 export function updateProject(id, patch) {
-  return apiPatch(`/api/projects/${id}/`, patch);
+  return apiPatch(`/projects/${id}/`, patch);
 }
-
 export function deleteProgress(id) {
-  return apiDelete(`/api/progress/${id}/`);
+  return apiDelete(`/progress/${id}/`);
 }
 
-// --- Kick off timer if already logged in ---
-if (accessToken) {
-  scheduleRefresh();
-}
-
-// --- Yarn API ---
+// Yarn
 export function listYarn() {
-  return apiGet("/api/yarns/"); // adjust if your endpoint differs
+  return apiGet("/yarns/");
 }
-
 export function createYarn(payload) {
-  // payload: { weight, brand, colour, amount_per_skein, product_link, material, quantity_owned_skeins }
-  return apiPost("/api/yarns/", payload);
+  return apiPost("/yarns/", payload);
 }
-
 export function updateYarn(id, patch) {
-  return apiPatch(`/api/yarns/${id}/`, patch);
+  return apiPatch(`/yarns/${id}/`, patch);
 }
-
 export function deleteYarn(id) {
-  return apiDelete(`/api/yarns/${id}/`);
+  return apiDelete(`/yarns/${id}/`);
 }
 
-// NEW: generic FormData POST
 async function apiPostForm(path, formData) {
   const doFetch = () =>
-    fetch(`${API_BASE}${path}`, {
+    fetch(api(path), {
       method: "POST",
       headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
-      body: formData, // let browser set boundary
+      body: formData,
     });
   let res = await doFetch();
   if (res.status === 401 && refreshToken) {
@@ -255,10 +237,9 @@ async function apiPostForm(path, formData) {
   return res.json();
 }
 
-// NEW: generic FormData PATCH (for project cover image)
 async function apiPatchForm(path, formData) {
   const doFetch = () =>
-    fetch(`${API_BASE}${path}`, {
+    fetch(api(path), {
       method: "PATCH",
       headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
       body: formData,
@@ -272,7 +253,6 @@ async function apiPatchForm(path, formData) {
   return res.json();
 }
 
-// Create progress WITH optional images (Array<File>)
 export function createProgressWithImages({ project, rows_completed, stitches_completed, notes, images = [] }) {
   const fd = new FormData();
   fd.append("project", project);
@@ -280,148 +260,90 @@ export function createProgressWithImages({ project, rows_completed, stitches_com
   fd.append("stitches_completed", stitches_completed ?? 0);
   fd.append("notes", notes ?? "");
   images.forEach((file) => fd.append("images", file));
-  return apiPostForm("/api/progress/", fd);
+  return apiPostForm("/progress/", fd);
 }
 
-// Update project cover image
 export function updateProjectCover(projectId, file) {
   const fd = new FormData();
   fd.append("main_image", file);
-  return apiPatchForm(`/api/projects/${projectId}/`, fd);
+  return apiPatchForm(`/projects/${projectId}/`, fd);
 }
 
-// create JSON project (no image)
 export function createProject(payload) {
-  return apiPost("/api/projects/", payload);
+  return apiPost("/projects/", payload);
 }
-
-// create project with cover image (multipart)
 export function createProjectWithImage(payload, file) {
   const fd = new FormData();
   Object.entries(payload).forEach(([k, v]) => {
     if (v !== undefined && v !== null) fd.append(k, v);
   });
   if (file) fd.append("main_image", file);
-  return apiPostForm("/api/projects/", fd);
+  return apiPostForm("/projects/", fd);
 }
 
-// --- Project ↔ Yarn links (ProjectYarn) ---
-export function createProjectYarn({ project, yarn, quantity_used_skeins = null}) {
-  return apiPost("/api/project-yarns/", { project, yarn, quantity_used_skeins});
+export function createProjectYarn({ project, yarn, quantity_used_skeins = null }) {
+  return apiPost("/project-yarns/", { project, yarn, quantity_used_skeins });
 }
-
 export function deleteProjectYarn(id) {
-  return apiDelete(`/api/project-yarns/${id}/`);
+  return apiDelete(`/project-yarns/${id}/`);
+}
+export function updateProjectYarn(id, patch) {
+  return apiPatch(`/project-yarns/${id}/`, patch);
 }
 
-// --- Tags API ---
-// Optional search; returns [{ id, name, project_count? }, ...]
 export async function listTags(search = "") {
   const qs = search ? `?search=${encodeURIComponent(search)}` : "";
-  // use apiFetch to see raw response if needed, attach auth if available
-  const res = await apiFetch(`/api/tags/${qs}`);
+  const res = await apiFetch(`/tags/${qs}`);
   if (res.status === 401) throw new Error("Not authorized to list tags.");
-  if (!res.ok) throw new Error(`Tags failed ${res.status}: ${await res.text().catch(()=> "")}`);
+  if (!res.ok) throw new Error(`Tags failed ${res.status}: ${await res.text().catch(() => "")}`);
   return res.json();
 }
-
 export async function createTag(name) {
-  const res = await apiFetch(`/api/tags/`, {
+  const res = await apiFetch(`/tags/`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ name }),
   });
-  if (!res.ok) throw new Error(`Create tag failed ${res.status}: ${await res.text().catch(()=> "")}`);
+  if (!res.ok) throw new Error(`Create tag failed ${res.status}: ${await res.text().catch(() => "")}`);
   return res.json();
 }
-
 export async function updateTag(id, name) {
-  const res = await apiFetch(`/api/tags/${id}/`, {
+  const res = await apiFetch(`/tags/${id}/`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ name }),
   });
-  if (!res.ok) throw new Error(`Update tag failed ${res.status}: ${await res.text().catch(()=> "")}`);
+  if (!res.ok) throw new Error(`Update tag failed ${res.status}: ${await res.text().catch(() => "")}`);
   return res.json();
 }
-
 export async function deleteTag(id) {
-  const res = await apiFetch(`/api/tags/${id}/`, { method: "DELETE" });
+  const res = await apiFetch(`/tags/${id}/`, { method: "DELETE" });
   if (!res.ok && res.status !== 204) {
-    throw new Error(`Delete tag failed ${res.status}: ${await res.text().catch(()=> "")}`);
+    throw new Error(`Delete tag failed ${res.status}: ${await res.text().catch(() => "")}`);
   }
   return true;
 }
-// --- User & progress helpers (add near the bottom) ---
 
-// All progress for the current user (optionally windowed)
 export function listAllProgress({ start, end } = {}) {
   const qs = new URLSearchParams();
-  if (start) qs.set("start", start);        // backend: support if you like
+  if (start) qs.set("start", start);
   if (end) qs.set("end", end);
   const suffix = qs.toString() ? `?${qs}` : "";
-  return apiGet(`/api/progress/${suffix}`); // most APIs return only the caller's progress
+  return apiGet(`/progress/${suffix}`);
 }
-
-// Change password (adjust path if your backend uses a different endpoint)
 export function changePassword({ old_password, new_password }) {
-  return apiPost(`/api/auth/change-password/`, { old_password, new_password });
+  return apiPost(`/auth/change-password/`, { old_password, new_password });
 }
-
-export function updateProjectYarn(id, patch) {
-  return apiPatch(`/api/project-yarns/${id}/`, patch);
-}
-
-// src/lib/api.js  (add these)
-export async function downloadBackup() {
-  const res = await fetch("http://localhost:8000/api/backup/", {
-    credentials: "include",
-  });
-  if (!res.ok) throw new Error(`Backup failed: ${res.status}`);
-  return await res.json(); // DB portion only
-}
-
-export async function restoreBackup(data, { mode = "replace" } = {}) {
-  const res = await fetch(`http://localhost:8000/api/restore/?mode=${mode}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    credentials: "include",
-    body: JSON.stringify(data),
-  });
-  if (!res.ok) throw new Error(await res.text());
-  return await res.json();
-}
-
-export async function apiFetch(path, opts = {}) {
-  const access = localStorage.getItem('access');
-  return fetch(withBase(path), {
-    ...opts,
-    credentials: 'omit',
-    headers: {
-      Accept: 'application/json',
-      ...(opts.headers || {}),
-      ...(access ? { Authorization: `Bearer ${access}` } : {}),
-    },
-  });
-}
-
-
 
 export async function adminListUsers(query = "") {
   const t = withTimeout(null, 10000, "adminListUsers");
-  const url = `/api/admin/users/${query ? `?search=${encodeURIComponent(query)}` : ""}`;
-
-  const res = await t.run((signal) =>
-    apiFetch(url, { signal }) // apiFetch should pass `signal` through to fetch
-  );
-
+  const url = `/admin/users/${query ? `?search=${encodeURIComponent(query)}` : ""}`;
+  const res = await t.run((signal) => apiFetch(url, { signal }));
   if (!res.ok) throw new Error(`Failed to list users: ${res.status}`);
   return res.json();
 }
-
-
 export async function adminSetPassword(userId, newPassword) {
-  const res = await apiFetch(`/api/admin/users/${userId}/set-password/`, {
+  const res = await apiFetch(`/admin/users/${userId}/set-password/`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ new_password: newPassword }),
@@ -433,9 +355,21 @@ export async function adminSetPassword(userId, newPassword) {
   }
   return true;
 }
-
+export async function adminCreateUser(payload) {
+  const res = await apiFetch(`/admin/users/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    let msg = `Failed to create user: ${res.status}`;
+    try { const data = await res.json(); msg = data?.detail || msg; } catch {}
+    throw new Error(msg);
+  }
+  return res.json();
+}
 export async function adminDeleteUser(userId) {
-  const res = await apiFetch(`/api/admin/users/${userId}/`, { method: "DELETE" });
+  const res = await apiFetch(`/admin/users/${userId}/`, { method: "DELETE" });
   if (!res.ok) {
     let msg = `Failed to delete user: ${res.status}`;
     try { const data = await res.json(); msg = data?.detail || msg; } catch {}
@@ -443,10 +377,8 @@ export async function adminDeleteUser(userId) {
   }
   return true;
 }
-
-// (Optional) also add a flags updater so Settings.jsx can toggle is_active/is_staff:
 export async function adminUpdateUser(userId, patch) {
-  const res = await apiFetch(`/api/admin/users/${userId}/`, {
+  const res = await apiFetch(`/admin/users/${userId}/`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(patch),
@@ -459,4 +391,20 @@ export async function adminUpdateUser(userId, patch) {
   return res.json();
 }
 
+export async function downloadBackup() {
+  const res = await fetch(api("/backup/"), { credentials: "omit" });
+  if (!res.ok) throw new Error(`Backup failed: ${res.status}`);
+  return res.json();
+}
+export async function restoreBackup(data, { mode = "replace" } = {}) {
+  const res = await fetch(api(`/restore/?mode=${encodeURIComponent(mode)}`), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "omit",
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
 
+if (accessToken) scheduleRefresh();

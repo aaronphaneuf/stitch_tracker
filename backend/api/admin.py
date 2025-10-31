@@ -25,7 +25,6 @@ class ProgressImageInline(admin.TabularInline):
         return f'<img src="{obj.image.url}" style="height:80px;border-radius:6px;" />'
     preview.allow_tags = True
 
-
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin):
     list_display = ("id", "name", "type", "start_date", "expected_end_date")
@@ -61,5 +60,3 @@ class ProjectProgressAdmin(admin.ModelAdmin):
     date_hierarchy = "date"
     autocomplete_fields = ("project",)
     inlines = [ProgressImageInline]
-
-

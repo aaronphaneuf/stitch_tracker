@@ -8,11 +8,28 @@ export default function ProgressTimeline({
     Date.parse(b.date || b.created_at) - Date.parse(a.date || a.created_at)
   );
 
+  const normalizeToBackend = (u) => {
+    if (!u) return "";
+    try {
+      const base = (import.meta?.env?.VITE_API_BASE) || window.location.origin;
+      const baseURL = new URL(base, window.location.href);
+      const url = new URL(u, baseURL.origin);
+
+      if (url.hostname === baseURL.hostname && !url.port && baseURL.port) {
+        url.port = baseURL.port;
+      }
+      return url.href;
+    } catch {
+      return u;
+    }
+  };
+
   const toUrls = (imgs) =>
     Array.isArray(imgs)
       ? imgs
           .map((x) => (typeof x === "string" ? x : x?.url || x?.image || x?.src))
           .filter(Boolean)
+          .map(normalizeToBackend)
       : [];
 
   const fmtDate = (v) => {
@@ -94,4 +111,3 @@ export default function ProgressTimeline({
     </ul>
   );
 }
-

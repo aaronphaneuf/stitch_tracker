@@ -10,4 +10,3 @@ export default function YarnBall({ colour = '#bbb', size = 44, label = '' }) {
     </div>
   );
 }
-

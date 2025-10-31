@@ -1,7 +1,7 @@
-// src/pages/Signup.jsx
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { registerAccount } from "../lib/auth";
+import { registerThenLogin} from "../lib/auth";
 
 export default function Signup() {
   const [form, setForm] = useState({ username: "", email: "", password: "" });
@@ -11,14 +11,12 @@ export default function Signup() {
 
   const submit = async (e) => {
     e.preventDefault();
-    setErr("");
-    setLoading(true);
+    setErr(""); setLoading(true);
     try {
-      await registerAccount(form);
-      navigate("/"); // go to projects/home
+      await registerThenLogin(form);
+      window.location.href = "/";
     } catch (e) {
       setErr(e.message || "Signup failed");
-    } finally {
       setLoading(false);
     }
   };
@@ -64,7 +62,7 @@ export default function Signup() {
             />
             <div className="label">
               <span className="label-text-alt opacity-70">
-                8+ chars; Django validators will enforce strength.
+                8+ chars.
               </span>
             </div>
           </label>
@@ -80,4 +78,3 @@ export default function Signup() {
     </div>
   );
 }
-

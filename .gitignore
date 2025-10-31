@@ -41,6 +41,9 @@ build/
 # --- Environment files ---
 .env
 .env.*.local
+.env.*
+*.env
+!.env.example
 
 # --- OS / IDE / Misc ---
 .DS_Store

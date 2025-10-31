@@ -68,4 +68,3 @@ export default function ChangePasswordModal({ open, onClose, onChanged }) {
     </dialog>
   );
 }
-

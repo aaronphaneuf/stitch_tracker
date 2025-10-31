@@ -117,7 +117,6 @@ export default function StashShelf({ yarns = []}) {
   return (
     <DndContext onDragEnd={onDragEnd}>
       <div className="space-y-6">
-        {/* Shelf */}
         <div className="flex items-center justify-center">
           <div className="grid grid-cols-3 gap-6">
             {SLOT_IDS.map(slotId => {
@@ -158,4 +157,3 @@ export default function StashShelf({ yarns = []}) {
     </DndContext>
   );
 }
-

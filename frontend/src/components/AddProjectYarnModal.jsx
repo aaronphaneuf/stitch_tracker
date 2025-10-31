@@ -224,4 +224,3 @@ export default function AddProjectYarnModal({ projectId, open, onClose, onAdded 
     </dialog>
   );
 }
-
