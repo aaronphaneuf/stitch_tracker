@@ -1,4 +1,4 @@
-# 🧶 StitchTracker
+#  <img src="frontend/src/assets/logo.svg" width="250" align="left"> StitchTracker
 
 ![Docker](https://img.shields.io/badge/Docker-ready-blue?logo=docker)
 ![Django](https://img.shields.io/badge/Django-4.x-092E20?logo=django&logoColor=white)
@@ -12,40 +12,39 @@
 ---
 
 **StitchTracker** is a cozy little app for knitters and crocheters who love keeping their projects organized.  
-Create, track, and celebrate your progress — all in one place.
+Create, track, and celebrate your progress all in one place.
 
 ---
 
-## ✨ Overview
+## Overview
 
 StitchTracker lets you manage your knitting and crochet projects from start to finish.  
-You can add materials, pattern links, and notes, upload your patterns as PDFs or images,  
-and log your progress over time (with optional progress photos).
+You can add materials, pattern links, and notes, and log your progress over time (with optional progress photos).
 
-It’s mobile-first, runs anywhere via Docker, and has both light and dark themes so it always looks great —  
+It’s mobile-first, runs anywhere via Docker, and has both light and dark themes (32 in total!) so it always looks great -   
 whether you’re working in bright sunlight or a late-night stitch session.
 
 ---
 
-## 🧵 Features
+## Features
 
-- 🪡 Create projects with:
+-  Create projects with:
   - Name, type (knit or crochet), tags, start and end dates  
   - Materials (yarn, hook/needle size)  
   - Pattern links or custom text input  
   - General notes
-- 🧩 Upload pattern files (PDF or image)
-- 📈 Track rows, stitches, and notes over time
-- 📸 Add optional progress photos for each log
-- 🌗 Light and dark mode
-- 📱 Responsive, mobile-first design
-- 🪶 Simple, clean interface using DaisyUI and TailwindCSS
-- 🔐 Secure authentication using JWT tokens
-- 🐳 Easy setup with Docker
+-  Upload pattern files (PDF or image)
+-  Track rows, stitches, and notes over time
+-  Add optional progress photos for each log
+-  Light and dark mode
+-  Responsive, mobile-first design
+-  Simple, clean interface using DaisyUI and TailwindCSS
+-  Secure authentication using JWT tokens
+-  Easy setup with Docker
 
 ---
 
-## 🧰 Tech Stack
+## Tech Stack
 
 **Frontend:** React + DaisyUI (TailwindCSS)  
 **Backend:** Django + Django REST Framework  
@@ -54,15 +53,15 @@ whether you’re working in bright sunlight or a late-night stitch session.
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
-### 1️⃣ Clone the repo
+### Clone the repo
 ```bash
 git clone https://github.com/yourusername/stitchtracker.git
 cd stitchtracker
 ```
 
-### 2️⃣ Set up your environment
+### Set up your environment
 Create a `.env` file in the root folder. Example:
 
 ```env
@@ -81,18 +80,18 @@ ACCESS_TOKEN_LIFETIME=300
 REFRESH_TOKEN_LIFETIME=86400
 ```
 
-### 3️⃣ Run with Docker
+###  Run with Docker
 ```bash
 docker compose up --build
 ```
 
 Once everything spins up:
-- Frontend → http://localhost:8082  
-- Backend API → http://localhost:8000/api  
+- Frontend → http://localhost:8082
+- Backend Admin → http://localhost:8082/admin  
 
 ---
 
-## 🗂 Project Structure
+## Project Structure
 
 ```
 stitchtracker/
@@ -120,7 +119,7 @@ stitchtracker/
 
 ---
 
-## 🪄 Development Tips
+## Development Tips
 
 - React components live under `/frontend/src/pages` and `/frontend/src/components`
 - The Django REST API handles projects, progress logs, and authentication
@@ -130,23 +129,23 @@ stitchtracker/
 
 ---
 
-## 🌙 Screenshots (coming soon)
+## Screenshots (coming soon)
 
 *(Add screenshots here once you’re happy with the UI — maybe a dark-mode project grid or upload modal!)*
 
 ---
 
-## 💬 Contributing
+## Contributing
 
 This is a personal side project, but friendly pull requests are always welcome.  
 If you’ve got ideas, feedback, or yarn-related puns, open an issue!
 
 ---
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License — feel free to fork, remix, and make it your own.
 
 ---
 
-**StitchTracker** — built with ❤️, coffee, and probably a few tangled skeins.
+**StitchTracker** — built with ❤️, tea, and probably a few tangled skeins.
