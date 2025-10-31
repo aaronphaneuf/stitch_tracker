@@ -1,4 +1,4 @@
-#  <img src="frontend/src/assets/logo.svg" width="250" align="left"> StitchTracker
+#  <img src="frontend/src/assets/logo.svg" width="50" align="left"> StitchTracker
 
 ![Docker](https://img.shields.io/badge/Docker-ready-blue?logo=docker)
 ![Django](https://img.shields.io/badge/Django-4.x-092E20?logo=django&logoColor=white)
