@@ -1,0 +1,63 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+*.egg
+*.log
+
+# Virtualenvs
+.venv/
+venv/
+env/
+ENV/
+
+# Bytecode cache
+*.pyc
+
+# --- Django ---
+# Local DBs
+*.sqlite3
+db.sqlite3
+
+# Media & static (collected at runtime)
+media/
+staticfiles/
+
+# Local settings / secret keys
+local_settings.py
+
+# --- Node / Frontend ---
+node_modules/
+dist/
+build/
+.cache/
+.npm/
+.yarn/
+*.lock
+
+# --- Environment files ---
+.env
+.env.*.local
+.env.*
+*.env
+!.env.example
+
+# --- OS / IDE / Misc ---
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# --- Testing / Coverage ---
+.coverage
+coverage.xml
+htmlcov/
+pytest_cache/
+
+# ignore media uploads
+/media/

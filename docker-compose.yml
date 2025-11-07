@@ -1,0 +1,58 @@
+services:
+  db:
+    image: postgres:16
+    env_file:
+      - .env.public
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $POSTGRES_USER -d $POSTGRES_DB"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    env_file:
+      - .env.public
+    depends_on:
+      db:
+        condition: service_healthy
+    expose:
+      - "8000"
+    volumes:
+      - ./media:/app/media
+      - static_data:/app/staticfiles
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        VITE_API_BASE: /api
+    depends_on:
+      - backend
+    expose:
+      - "80"
+    restart: unless-stopped
+
+  reverse-proxy:
+    image: nginx:alpine
+    depends_on:
+      - backend
+      - frontend
+    ports:
+      - "8082:80"
+    volumes:
+      - ./deploy/nginx:/etc/nginx/conf.d:ro
+      - ./media:/app/media
+      - static_data:/staticfiles:ro
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  static_data:
