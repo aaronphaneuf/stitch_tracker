@@ -11,38 +11,41 @@
 
 ---
 
-**StitchTracker** is a cozy little app for knitters and crocheters who love keeping their projects organized.  
-Create, track, and celebrate your progress all in one place.
+**StitchTracker** is a cozy little app for knitters and crocheters who love keeping their projects organized. Create, track, and celebrate your progress all in one place.
 
 ---
 
 ## Overview
 
-StitchTracker lets you manage your knitting and crochet projects from start to finish.  
-You can add materials, pattern links, and notes, and log your progress over time (with optional progress photos).
+StitchTracker lets you manage your knitting and crochet projects from start to finish. You can add materials, pattern links, and notes, and log your progress over time (with optional progress photos).
 
-It’s mobile-first, runs anywhere via Docker, and has both light and dark themes (32 in total!) so it always looks great -   
-whether you’re working in bright sunlight or a late-night stitch session.
+It’s mobile-first, runs anywhere via Docker, and has both light and dark themes (32 in total!) so it always looks great - whether you’re working in bright sunlight or a late-night stitch session.
 
 ---
 
 ## Features
 
--  Create projects with:
-  - Name, type (knit or crochet), tags, start and end dates  
-  - Materials (yarn, hook/needle size)  
-  - Pattern links or custom text input  
-  - General notes
--  Upload pattern files (PDF or image)
--  Track rows, stitches, and notes over time
--  Add optional progress photos for each log
--  Light and dark mode
--  Responsive, mobile-first design
--  Simple, clean interface using DaisyUI and TailwindCSS
--  Secure authentication using JWT tokens
--  Easy setup with Docker
+### Projects
 
----
+- Create projects with:
+  - Name, type (knit or crochet), tags, start and end dates
+  - Materials (yarn, hook/needle size)
+  - Pattern links or custom text input
+  - General notes
+- Track rows, stitches, and notes over time
+- Add optional progress photos for each log
+
+### Stash (Yarn Organization)
+- Log and organize your yarn by brand, colour, fiber, weight, yardage, and status
+- **Relaxing “stash tidy” mode**: a calm, drag‑and‑drop shelf for sorting skeins into bins
+
+### Progress & Insights
+- **GitHub‑style heatmap** of your stitching activity by day
+- Project timeline view with photo snippets
+
+### Personalization & Access
+- Choose a theme to suit your style (light/dark + DaisyUI themes)
+- **User management** with secure authentication (JWT)
 
 ## Tech Stack
 
@@ -57,28 +60,12 @@ whether you’re working in bright sunlight or a late-night stitch session.
 
 ### Clone the repo
 ```bash
-git clone https://github.com/yourusername/stitchtracker.git
+git clone https://github.com/aaronphaneuf/stitchtracker.git
 cd stitchtracker
 ```
 
 ### Set up your environment
-Create a `.env` file in the root folder. Example:
-
-```env
-# Backend
-DJANGO_SECRET_KEY=your_secret_key
-POSTGRES_DB=stitchtracker
-POSTGRES_USER=stitchtracker
-POSTGRES_PASSWORD=changeme
-DEBUG=True
-
-# Frontend
-VITE_API_BASE_URL=http://localhost:8000/api
-
-# JWT
-ACCESS_TOKEN_LIFETIME=300
-REFRESH_TOKEN_LIFETIME=86400
-```
+Create a `.env.public` file in the root folder. Use the included .env.example as your baseline.
 
 ###  Run with Docker
 ```bash
@@ -98,7 +85,7 @@ stitchtracker/
 ├── backend/
 │   ├── api/
 │   ├── stitchtracker_backend/
-│   ├── media/               # uploaded patterns & progress images
+│   ├── media/
 │   ├── requirements.txt
 │   └── Dockerfile
 ├── frontend/
@@ -114,6 +101,7 @@ stitchtracker/
 │   └── nginx/
 │       └── default.conf
 ├── docker-compose.yml
+├── .env.example 
 └── README.md
 ```
 
@@ -124,21 +112,22 @@ stitchtracker/
 - React components live under `/frontend/src/pages` and `/frontend/src/components`
 - The Django REST API handles projects, progress logs, and authentication
 - Media uploads (patterns & progress images) are stored in `/media`
-- You can use `http://localhost:8000/admin` for Django’s admin panel (create a superuser first)
-- Tailwind and DaisyUI make styling fast and fun — try tweaking themes in `tailwind.config.js`
+- You can use `http://localhost:8000/admin` for Django’s admin panel
 
 ---
 
 ## Screenshots (coming soon)
 
-*(Add screenshots here once you’re happy with the UI — maybe a dark-mode project grid or upload modal!)*
+<img src="screenshots/screenshot1.png">
+<img src="screenshots/screenshot2.png">
+<img src="screenshots/screenshot3.png">
+<img src="screenshots/yarn_stash.gif">
 
 ---
 
 ## Contributing
 
-This is a personal side project, but friendly pull requests are always welcome.  
-If you’ve got ideas, feedback, or yarn-related puns, open an issue!
+This is a personal side project, but friendly pull requests are always welcome. If you’ve got ideas, feedback, or yarn-related puns, open an issue!
 
 ---
 
