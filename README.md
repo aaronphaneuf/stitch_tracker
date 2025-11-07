@@ -13,6 +13,8 @@
 
 **StitchTracker** is a cozy little app for knitters and crocheters who love keeping their projects organized. Create, track, and celebrate your progress all in one place.
 
+<img src="screenshots/yarn_stash.gif" align="center">
+
 ---
 
 ## Overview
@@ -116,12 +118,11 @@ stitchtracker/
 
 ---
 
-## Screenshots (coming soon)
+## Screenshots
 
 <img src="screenshots/screenshot1.png">
 <img src="screenshots/screenshot2.png">
 <img src="screenshots/screenshot3.png">
-<img src="screenshots/yarn_stash.gif">
 
 ---
 
