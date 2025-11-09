@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
 set -e
 
-mkdir -p /app/media /app/staticfiles \
-         /app/media/progress \
-         /app/media/projects/main
+mkdir -p \
+  /app/media \
+  /app/media/progress \
+  /app/media/projects \
+  /app/media/projects/main \
+  /app/staticfiles
 
 chown -R 1000:1000 /app/media /app/staticfiles || true
 chmod -R u+rwX /app/media /app/staticfiles || true

@@ -16,7 +16,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY backend/ /app/
 
 RUN useradd -m appuser \
- && mkdir -p /app/data /app/staticfiles \
+ && mkdir -p /app/media /app/staticfiles \
  && chown -R appuser:appuser /app
 
 USER appuser
