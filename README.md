@@ -146,3 +146,4 @@ This project is licensed under the MIT License — feel free to fork, remix, and
 ---
 
 **StitchTracker** — built with ❤️, tea, and probably a few tangled skeins.
+
