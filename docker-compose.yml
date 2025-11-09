@@ -24,7 +24,7 @@ services:
     expose:
       - "8000"
     volumes:
-      - ./media:/app/media
+      - media_data:/app/media
       - static_data:/app/staticfiles
     restart: unless-stopped
 
@@ -49,10 +49,12 @@ services:
       - "8082:80"
     volumes:
       - ./deploy/nginx:/etc/nginx/conf.d:ro
-      - ./media:/app/media
+      - media_data:/app/media:ro
       - static_data:/staticfiles:ro
     restart: unless-stopped
 
 volumes:
   pgdata:
   static_data:
+  media_data:
+

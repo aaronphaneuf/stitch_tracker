@@ -16,7 +16,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY backend/ /app/
 
 RUN useradd -m appuser \
- && mkdir -p /app/data /app/staticfiles \
+ && mkdir -p /app/media /app/staticfiles \
  && chown -R appuser:appuser /app
 
 USER appuser
@@ -28,3 +28,4 @@ RUN if [ "$COLLECTSTATIC" = "1" ]; then python manage.py collectstatic --noinput
 COPY --chmod=0755 backend/entrypoint.sh /app/entrypoint.sh
 
 ENTRYPOINT ["/app/entrypoint.sh"]
+
