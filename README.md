@@ -62,12 +62,12 @@ It’s mobile-first, runs anywhere via Docker, and has both light and dark theme
 
 ### Clone the repo
 ```bash
-git clone https://github.com/aaronphaneuf/stitchtracker.git
+git clone https://github.com/aaronphaneuf/stitch_tracker.git
 cd stitchtracker
 ```
 
 ### Set up your environment
-Create a `.env.public` file in the root folder. Use the included .env.example as your baseline.
+Create a `.env.public` file in the root folder. Use the included `.env.example` as your baseline.
 
 ###  Run with Docker
 ```bash
@@ -85,20 +85,28 @@ Once everything spins up:
 ```
 stitchtracker/
 ├── backend/
+│   ├── accounts/
 │   ├── api/
 │   ├── stitchtracker_backend/
-│   ├── media/
 │   ├── requirements.txt
 │   └── Dockerfile
+│   ├── entrypoint.sh 
+│   ├── manage.py
 ├── frontend/
 │   ├── src/
+│   │   ├── api/
+│   │   ├── assets/
 │   │   ├── components/
-│   │   ├── pages/
 │   │   ├── lib/
-│   │   └── assets/
-│   ├── public/
+│   │   ├── pages/
+│   ├── Dockerfile
+│   ├── index.html
+│   ├── nginx.conf
+│   ├── package-lock.json
 │   ├── package.json
-│   └── Dockerfile
+│   ├── postcss.config.js
+│   ├── tailwind.config.js
+│   └── vite.config.mjs
 ├── deploy/
 │   └── nginx/
 │       └── default.conf
@@ -113,7 +121,6 @@ stitchtracker/
 
 - React components live under `/frontend/src/pages` and `/frontend/src/components`
 - The Django REST API handles projects, progress logs, and authentication
-- Media uploads (patterns & progress images) are stored in `/media`
 - You can use `http://localhost:8000/admin` for Django’s admin panel
 
 ---
@@ -139,3 +146,5 @@ This project is licensed under the MIT License — feel free to fork, remix, and
 ---
 
 **StitchTracker** — built with ❤️, tea, and probably a few tangled skeins.
+
+
