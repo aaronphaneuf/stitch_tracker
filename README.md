@@ -48,6 +48,7 @@ It’s mobile-first, runs anywhere via Docker, and has both light and dark theme
 ### Personalization & Access
 - Choose a theme to suit your style (light/dark + DaisyUI themes)
 - **User management** with secure authentication (JWT)
+- **Support for OpenID Connect (OIDC)**
 
 ## Tech Stack
 
@@ -146,4 +147,5 @@ This project is licensed under the MIT License — feel free to fork, remix, and
 ---
 
 **StitchTracker** — built with ❤️, tea, and probably a few tangled skeins.
+
 

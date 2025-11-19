@@ -26,6 +26,13 @@ services:
     volumes:
       - media_data:/app/media
       - static_data:/app/staticfiles
+    # Optional: only needed if your IdP hostname is NOT resolvable from inside
+    # the container. For example, if you run a homelab IdP on your LAN:
+    #
+    # extra_hosts:
+    #   - "idp.example.local:192.168.1.50"
+    #
+    # In most setups (public IdP, or proper DNS), you can leave this out.
     restart: unless-stopped
 
   frontend:
@@ -57,3 +64,4 @@ volumes:
   pgdata:
   static_data:
   media_data:
+

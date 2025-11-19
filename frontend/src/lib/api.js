@@ -6,6 +6,16 @@ let accessToken = localStorage.getItem("access") || null;
 let refreshToken = localStorage.getItem("refresh") || null;
 let refreshTimer = null;
 
+export function setTokens({ access, refresh }) {
+  accessToken = access;
+  refreshToken = refresh;
+  localStorage.setItem("access", accessToken);
+  localStorage.setItem("refresh", refreshToken);
+
+  if (refreshTimer) clearTimeout(refreshTimer);
+  scheduleRefresh();
+}
+
 function decodeJwt(token) {
   try {
     const base64 = token.split(".")[1];
@@ -54,19 +64,18 @@ export async function login({ username, password }) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ username, password }),
   });
+
   if (!r.ok) throw new Error("Invalid credentials");
 
   const data = await r.json().catch(() => ({}));
-  if (!data.access || !data.refresh) throw new Error("Login failed: no tokens returned");
+  if (!data.access || !data.refresh)
+    throw new Error("Login failed: no tokens returned");
 
-  accessToken = data.access;
-  refreshToken = data.refresh;
-  localStorage.setItem("access", accessToken);
-  localStorage.setItem("refresh", refreshToken);
+  setTokens({ access: data.access, refresh: data.refresh });
 
-  scheduleRefresh();
   return data;
 }
+
 
 export function logout() {
   accessToken = null;
@@ -78,17 +87,20 @@ export function logout() {
 
 async function tryRefresh() {
   if (!refreshToken) throw new Error("No refresh token");
+
   const r = await fetch(api("/token/refresh/"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ refresh: refreshToken }),
   });
+
   if (!r.ok) throw new Error("Refresh failed");
 
   const data = await r.json();
-  accessToken = data.access;
-  localStorage.setItem("access", accessToken);
-  return accessToken;
+
+  setTokens({ access: data.access, refresh: refreshToken });
+
+  return data.access;
 }
 
 async function apiGet(path) {
