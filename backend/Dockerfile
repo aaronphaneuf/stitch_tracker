@@ -28,3 +28,4 @@ RUN if [ "$COLLECTSTATIC" = "1" ]; then python manage.py collectstatic --noinput
 COPY --chmod=0755 backend/entrypoint.sh /app/entrypoint.sh
 
 ENTRYPOINT ["/app/entrypoint.sh"]
+

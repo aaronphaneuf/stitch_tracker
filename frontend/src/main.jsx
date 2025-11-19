@@ -12,6 +12,7 @@ import YarnStash from "./pages/YarnStash.jsx";
 import TagsPage from "./pages/Tags.jsx";
 import UserPage from "./pages/User.jsx";
 import Signup from "./pages/Signup.jsx";
+import OidcCallback from "./pages/OidcCallback.jsx";
 
 const router = createBrowserRouter([
   {
@@ -26,6 +27,7 @@ const router = createBrowserRouter([
       { path: "projects/:id", element: <RequireAuth><ProjectDetail /></RequireAuth> },
       { path: "/me", element: <UserPage />},
       { path: "/signup", element: <Signup />},
+      { path: "/oidc-callback", element: <OidcCallback /> },
     ],
   },
 ]);

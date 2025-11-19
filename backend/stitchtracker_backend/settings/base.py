@@ -13,7 +13,7 @@ AUTH_USER_MODEL = "accounts.User"
 INSTALLED_APPS = [
     "django.contrib.admin","django.contrib.auth","django.contrib.contenttypes",
     "django.contrib.sessions","django.contrib.messages","django.contrib.staticfiles",
-    "rest_framework","corsheaders","api","accounts",
+    "rest_framework","corsheaders","api","accounts","mozilla_django_oidc",
 ]
 
 MIDDLEWARE = [
@@ -55,7 +55,43 @@ REST_FRAMEWORK = {
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
-MEDIA_ROOT = BASE_DIR / "projects"  
-MEDIA_URL  = "/projects/" 
+MEDIA_ROOT = BASE_DIR / "projects"
+MEDIA_URL  = "/projects/"
 
 SQLITE_PATH = os.getenv("SQLITE_PATH", str(BASE_DIR / "db.sqlite3"))
+
+ENABLE_OIDC = os.getenv("ENABLE_OIDC", "true").lower() in {"1", "true", "yes", "on"}
+
+if ENABLE_OIDC:
+    if "mozilla_django_oidc" not in INSTALLED_APPS:
+        INSTALLED_APPS.append("mozilla_django_oidc")
+
+    AUTHENTICATION_BACKENDS = [
+        "mozilla_django_oidc.auth.OIDCAuthenticationBackend",
+        "django.contrib.auth.backends.ModelBackend",
+    ]
+
+    OIDC_RP_CLIENT_ID = os.environ.get("OIDC_RP_CLIENT_ID")
+    OIDC_RP_CLIENT_SECRET = os.environ.get("OIDC_RP_CLIENT_SECRET", "")
+
+    OIDC_OP_AUTHORIZATION_ENDPOINT = os.environ.get("OIDC_OP_AUTHORIZATION_ENDPOINT")
+    OIDC_OP_TOKEN_ENDPOINT = os.environ.get("OIDC_OP_TOKEN_ENDPOINT")
+    OIDC_OP_USER_ENDPOINT = os.environ.get("OIDC_OP_USER_ENDPOINT")
+    OIDC_OP_JWKS_ENDPOINT = os.environ.get("OIDC_OP_JWKS_ENDPOINT")
+
+    OIDC_RP_SCOPES = os.environ.get("OIDC_RP_SCOPES", "openid email profile")
+    OIDC_RP_SIGN_ALGO = os.environ.get("OIDC_RP_SIGN_ALGO", "RS256")
+    OIDC_CREATE_USER = os.getenv("OIDC_CREATE_USER", "false").lower() in {"1", "true", "yes", "on"}
+
+    OIDC_CALLBACK_CLASS = "accounts.oidc.StitchTrackerOIDCCallbackView"
+
+    FRONTEND_OIDC_REDIRECT_URL = os.environ.get(
+        "FRONTEND_OIDC_REDIRECT_URL",
+        "http://localhost:5173/oidc-callback",
+    )
+else:
+    AUTHENTICATION_BACKENDS = [
+        "django.contrib.auth.backends.ModelBackend",
+    ]
+
+SITE_URL = os.environ.get("SITE_URL", "http://localhost:8082/")

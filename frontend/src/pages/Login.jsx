@@ -8,6 +8,9 @@ export default function Login() {
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const apiBase = import.meta.env.VITE_API_BASE || "/api";
+  const OIDC_LOGIN_URL = "/oidc/authenticate/"; 
+  
 
   const submit = async (e) => {
     e.preventDefault();
@@ -49,6 +52,17 @@ export default function Login() {
           <button className={`btn btn-primary ${loading ? "loading" : ""}`} type="submit">
             {loading ? "Signing in..." : "Sign in"}
           </button>
+
+	  <button
+  type="button"
+  className="btn btn-outline w-full mt-2"
+  onClick={() => {
+    window.location.href = OIDC_LOGIN_URL;
+  }}
+>
+  Sign in with Single Sign-On
+</button>
+
 
           <p className="text-sm text-center mt-2">
             Don’t have an account?{" "}
